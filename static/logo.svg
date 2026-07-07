@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="NarChat nar maskotu">
+  <defs>
+    <radialGradient id="nar" cx="42%" cy="34%" r="72%">
+      <stop offset="0%" stop-color="#e2415b"/>
+      <stop offset="52%" stop-color="#c0223f"/>
+      <stop offset="100%" stop-color="#8a1430"/>
+    </radialGradient>
+    <linearGradient id="sapka" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3a2030"/>
+      <stop offset="100%" stop-color="#241019"/>
+    </linearGradient>
+    <radialGradient id="tane" cx="38%" cy="32%" r="75%">
+      <stop offset="0%" stop-color="#ff8197"/>
+      <stop offset="60%" stop-color="#ef3d5b"/>
+      <stop offset="100%" stop-color="#c11d3c"/>
+    </radialGradient>
+  </defs>
+
+  <!-- dökülen yakut nar taneleri -->
+  <g>
+    <circle cx="150" cy="430" r="20" fill="url(#tane)"/>
+    <circle cx="142" cy="423" r="6" fill="#ffd0d8" opacity=".85"/>
+    <circle cx="372" cy="450" r="16" fill="url(#tane)"/>
+    <circle cx="366" cy="444" r="5" fill="#ffd0d8" opacity=".85"/>
+    <circle cx="408" cy="402" r="12" fill="url(#tane)"/>
+  </g>
+
+  <!-- gövde (nar kafa) -->
+  <path d="M256 150
+           C360 150 410 232 410 312
+           C410 408 340 462 256 462
+           C172 462 102 408 102 312
+           C102 232 152 150 256 150 Z" fill="url(#nar)"/>
+  <!-- parlama -->
+  <path d="M168 218 C150 250 146 286 156 318 C120 286 132 232 168 218 Z" fill="#ff97ab" opacity=".35"/>
+
+  <!-- şapka (HAT) -->
+  <g>
+    <ellipse cx="256" cy="176" rx="118" ry="30" fill="url(#sapka)"/>
+    <path d="M183 168 C183 110 200 78 256 78 C312 78 329 110 329 168 Z" fill="url(#sapka)"/>
+    <rect x="183" y="140" width="146" height="22" rx="11" fill="#cf9b46"/>
+    <ellipse cx="256" cy="168" rx="118" ry="26" fill="#1c0d14" opacity=".25"/>
+  </g>
+
+  <!-- yüz -->
+  <g>
+    <circle cx="212" cy="300" r="20" fill="#fff"/>
+    <circle cx="300" cy="300" r="20" fill="#fff"/>
+    <circle cx="216" cy="304" r="10" fill="#2e171c"/>
+    <circle cx="304" cy="304" r="10" fill="#2e171c"/>
+    <circle cx="220" cy="300" r="3.4" fill="#fff"/>
+    <circle cx="308" cy="300" r="3.4" fill="#fff"/>
+    <!-- yanaklar -->
+    <circle cx="178" cy="338" r="16" fill="#ff7d8f" opacity=".5"/>
+    <circle cx="334" cy="338" r="16" fill="#ff7d8f" opacity=".5"/>
+    <!-- gülümseme -->
+    <path d="M226 348 Q256 376 286 348" fill="none" stroke="#2e171c" stroke-width="9" stroke-linecap="round"/>
+  </g>
+</svg>

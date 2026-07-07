@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="NarChat">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="75%">
+      <stop offset="0%" stop-color="#fff3ee"/>
+      <stop offset="100%" stop-color="#f6ddd2"/>
+    </radialGradient>
+    <radialGradient id="nar2" cx="42%" cy="34%" r="72%">
+      <stop offset="0%" stop-color="#e2415b"/>
+      <stop offset="52%" stop-color="#c0223f"/>
+      <stop offset="100%" stop-color="#8a1430"/>
+    </radialGradient>
+    <linearGradient id="sapka2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3a2030"/>
+      <stop offset="100%" stop-color="#241019"/>
+    </linearGradient>
+  </defs>
+  <!-- maskable güvenli zemin (tam kare) -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <!-- gövde (merkezde, güvenli alan içinde) -->
+  <path d="M256 168
+           C346 168 392 240 392 308
+           C392 392 332 440 256 440
+           C180 440 120 392 120 308
+           C120 240 166 168 256 168 Z" fill="url(#nar2)"/>
+  <!-- şapka -->
+  <ellipse cx="256" cy="190" rx="104" ry="26" fill="url(#sapka2)"/>
+  <path d="M192 184 C192 132 207 104 256 104 C305 104 320 132 320 184 Z" fill="url(#sapka2)"/>
+  <rect x="192" y="160" width="128" height="20" rx="10" fill="#cf9b46"/>
+  <!-- yüz -->
+  <circle cx="216" cy="300" r="18" fill="#fff"/>
+  <circle cx="296" cy="300" r="18" fill="#fff"/>
+  <circle cx="220" cy="304" r="9" fill="#2e171c"/>
+  <circle cx="300" cy="304" r="9" fill="#2e171c"/>
+  <circle cx="184" cy="334" r="14" fill="#ff7d8f" opacity=".5"/>
+  <circle cx="328" cy="334" r="14" fill="#ff7d8f" opacity=".5"/>
+  <path d="M228 344 Q256 370 284 344" fill="none" stroke="#2e171c" stroke-width="8" stroke-linecap="round"/>
+</svg>

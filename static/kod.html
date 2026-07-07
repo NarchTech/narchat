@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#faf2ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#190d11" media="(prefers-color-scheme: dark)">
+<meta name="description" content="NarChat — ücretsiz, sıfır kişisel veri kayıt kodu al">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/tokens.css?v=43">
+<title>NarChat — kayıt kodu al</title>
+<style>
+  .kod-kutu { margin-top: var(--s-4); padding: var(--s-5); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-4); text-align: center; }
+  .kod-metin { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 1.5rem; font-weight: 700; letter-spacing: .04em; color: var(--primary); user-select: all; }
+  .kod-durum { text-align: center; }
+  .apk-not { margin-top: var(--s-6); padding-top: var(--s-4); border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="orta">
+  <div class="giris-logo">
+    <img class="marka-ikon" src="/logo.svg" alt="NarChat" width="72" height="72">
+    <h1>NarChat</h1>
+  </div>
+  <p class="alt">Tamamen ücretsiz · sıfır kişisel veri — yalnız bir kullanıcı adı + parola. Kayıt kodunu al, uygulamaya gir.</p>
+
+  <button id="kodAlBtn" class="tam">NARC- kayıt kodu al</button>
+  <p class="kod-durum" id="kodDurum"></p>
+
+  <div class="kod-kutu gizli" id="kodKutu">
+    <div class="kod-metin" id="kodMetin"></div>
+    <p class="ince">Bu kod <b>72 saat</b> geçerli ve <b>tek kullanımlıktır</b>. <a href="/">NarChat'e git</a> → "Yeni hesap oluştur" ekranında gir.</p>
+  </div>
+
+  <p class="ince apk-not">📱 <a href="/apk/NarChat.apk" download>Android uygulamasını indir (APK, ~4.7 MB)</a><br>Kurulum: dosyayı aç → "bilinmeyen kaynak"a izin ver. iPhone'da tarayıcıdan kullan (Ana ekrana ekle).</p>
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+// Bundled native app'te API farklı origin'de (kok.js ile aynı mantık); web'de boş → aynı-origin (davranış değişmez).
+const API_KOK = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ? 'https://narchat.narchviz.com' : '';
+$('kodAlBtn').onclick = async () => {
+  $('kodAlBtn').disabled = true;
+  $('kodDurum').textContent = 'kod alınıyor…';
+  $('kodDurum').classList.remove('hata');
+  try {
+    const r = await fetch(API_KOK + '/api/narc-kod', { method: 'POST', credentials: API_KOK ? 'include' : 'same-origin', headers: { 'Content-Type': 'application/json', 'X-NarChat': '1' }, body: '{}' });
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 404) {
+      $('kodDurum').textContent = 'Şu an self-servis kayıt kapalı — davet kodun yoksa bize ulaş.';
+      $('kodDurum').classList.add('hata');
+    } else if (r.status === 429) {
+      $('kodDurum').textContent = (d && d.hata) || 'Kota doldu, biraz sonra tekrar dene.';
+      $('kodDurum').classList.add('hata');
+    } else if (!r.ok) {
+      $('kodDurum').textContent = (d && d.hata) || 'Kod alınamadı, tekrar dene.';
+      $('kodDurum').classList.add('hata');
+    } else {
+      $('kodMetin').textContent = d.kod;
+      $('kodKutu').classList.remove('gizli');
+      $('kodDurum').textContent = '';
+    }
+  } catch {
+    $('kodDurum').textContent = 'Sunucuya ulaşılamadı.';
+    $('kodDurum').classList.add('hata');
+  } finally {
+    $('kodAlBtn').disabled = false;
+  }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# Cloudflare Tunnel — example configuration (generic template)
+#
+# WHAT THIS BUYS YOU: a public HTTPS address for a server that never opens a
+# port to the internet. The tunnel dials out; nothing dials in. On a home
+# connection behind CGNAT, this is often the only ingress that works at all.
+#
+# WHAT IT COSTS YOU: every connection your users make is terminated by a third
+# party before it reaches you. That party can see who connected, from where, and
+# when — the connection metadata this system deliberately does not collect
+# itself. It cannot see message content (that is encrypted end-to-end, and the
+# server itself cannot read it either), but "the operator can't read it" and
+# "nobody in the path can see anything" are different claims, and only the first
+# one is true here.
+#
+# The pilot deployment described in the paper ran exactly this way, and the
+# paper says so in those words rather than claiming sovereignty it did not have.
+# If that trade is wrong for you, docs/SELF-HOSTING.md describes two ingress
+# paths that avoid it (private network only; your own reverse proxy).
+#
+# Setup:
+#   cloudflared tunnel login
+#   cloudflared tunnel create narchat            # prints a tunnel UUID
+#   cloudflared tunnel route dns narchat chat.example.com
+#   cloudflared tunnel --config deploy/cloudflared-example.yml run
+
+tunnel: PLACEHOLDER-TUNNEL-UUID
+credentials-file: /path/to/.cloudflared/PLACEHOLDER-TUNNEL-UUID.json
+
+ingress:
+  - hostname: chat.example.com
+    service: http://127.0.0.1:8101
+    originRequest:
+      # Server-sent events carry the live message stream: no buffering, no
+      # idle timeout, or clients silently stop receiving messages.
+      disableChunkedEncoding: false
+      noTLSVerify: false
+      connectTimeout: 30s
+  - service: http_status:404

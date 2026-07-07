@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#faf2ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#190d11" media="(prefers-color-scheme: dark)">
+<meta name="description" content="NarChat — özel, uçtan-uca şifreli ekip sohbeti">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="NarChat">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/ikon-180.png">
+<link rel="stylesheet" href="/tokens.css?v=43">
+<title>NarChat — özel ekip sohbeti</title>
+</head>
+<body>
+
+<!-- ════════ AÇILIŞ SPLASH (boot oturum kontrolüne dek görünür — giriş-ekranı flash'ını önler) ════════ -->
+<div class="orta" id="splash" aria-hidden="true">
+  <div class="giris-logo">
+    <img class="marka-ikon" src="/logo.svg" alt="NarChat" width="92" height="92">
+    <div class="wordmark" style="font-size:34px"><span class="narc">NarC</span><span class="hat">HAT</span></div>
+    <span class="rozet-e2e">🔒 Uçtan-uca şifreli</span>
+  </div>
+</div>
+
+<!-- ════════ GİRİŞ / KAYIT ════════ -->
+<div class="orta gizli" id="girisEkran">
+  <div class="giris-logo">
+    <img class="marka-ikon" src="/logo.svg" alt="NarChat" width="92" height="92">
+    <div class="wordmark" style="font-size:34px"><span class="narc">NarC</span><span class="hat">HAT</span></div>
+    <span class="rozet-e2e">🔒 Uçtan-uca şifreli</span>
+  </div>
+  <p class="alt">Mesajların <b>cihazında</b> şifrelenir — sunucu içeriği <b>okuyamaz</b>.<br>Özel, gizli, bize ait ekip sohbeti.</p>
+  <input id="gKullanici" placeholder="kullanıcı adı" autocomplete="username" autocapitalize="none" spellcheck="false">
+  <input id="gParola" type="password" placeholder="parola (en az 4)" autocomplete="current-password">
+  <input id="gDavet" placeholder="NARC- kayıt kodu (yeni hesap için)" autocapitalize="none" spellcheck="false" autocomplete="off">
+  <button id="girisBtn" class="tam">Giriş yap</button>
+  <button id="kayitBtn" class="gri tam">Yeni hesap oluştur</button>
+  <div class="hata" id="gHata"></div>
+  <p class="ince">Hesabını yalnız bu cihaz açabilir. Anahtarın paroluyla şifreli saklanır.</p>
+  <p class="ince"><a href="/kod.html">NARC- kayıt kodun yok mu? Ücretsiz al →</a></p>
+</div>
+
+<!-- ════════ KİLİT (reload sonrası) ════════ -->
+<div class="orta gizli" id="kilitEkran">
+  <div class="giris-logo">
+    <img class="marka-ikon" src="/logo.svg" alt="NarChat" width="78" height="78">
+    <h1>🔒 Kilitli</h1>
+  </div>
+  <p class="alt"><b id="kKullanici"></b> — özel anahtarın bu cihazda <b>parolayla şifreli</b>.<br>Açmak için parolanı gir.</p>
+  <input id="kParola" type="password" placeholder="parola" autocomplete="current-password">
+  <button id="kAc" class="tam">Kilidi aç</button>
+  <button id="kCikis" class="gri tam">Başka hesapla gir</button>
+  <div class="hata" id="kHata"></div>
+</div>
+
+<!-- ════════ CİHAZ BAĞLA (yeni cihaz: hesabın anahtarını getir) ════════ -->
+<div class="orta gizli" id="baglaEkran">
+  <div class="giris-logo">
+    <img class="marka-ikon" src="/logo.svg" alt="NarChat" width="78" height="78">
+    <h1>🔗 Cihaz bağla</h1>
+  </div>
+  <p class="alt"><b id="bKullanici"></b> hesabının anahtarı bu cihazda yok.<br>
+    Anahtarın olan cihazda <b>Ayarlar → Yeni cihaz bağla</b> de, çıkan kodu buraya gir.</p>
+  <input id="bKod" placeholder="bağlama kodu (ör. ABC123-XK7…)" autocapitalize="characters" spellcheck="false" autocomplete="off">
+  <button id="bBagla" class="tam">Bağla ve gir</button>
+  <button id="bYeni" class="gri tam">Anahtarım yok — bu cihazda yeni oluştur</button>
+  <button id="bCikis" class="gri tam">Başka hesapla gir</button>
+  <div class="hata" id="bHata"></div>
+  <p class="ince">Kod tek kullanımlık ve kısa sürede geçersiz olur. Özel anahtarın sunucuya hiç düz gönderilmez.</p>
+</div>
+
+<!-- ════════ ANA UYGULAMA ════════ -->
+<div id="sohbet" class="gizli">
+
+  <div class="baglanti-banner gizli" id="baglantiBanner" role="status" aria-live="polite"></div>
+
+  <!-- ── DEVAM EDEN ARAMA mini şeridi (FAZ E) — arama ekranı küçültülünce her görünümün üstünde ── -->
+  <div class="arama-mini gizli" id="aramaMini" role="button" tabindex="0" aria-label="Devam eden aramaya dön">
+    <span class="arama-mini-nokta" aria-hidden="true"></span>
+    <span class="arama-mini-ad" id="aramaMiniAd"></span>
+    <span class="arama-mini-durum" id="aramaMiniDurum"></span>
+    <span class="arama-mini-sure gizli" id="aramaMiniSure">00:00</span>
+    <span class="arama-mini-don" aria-hidden="true">↥ Dön</span>
+    <button class="arama-mini-kapat" id="aramaMiniKapatBtn" aria-label="Aramayı bitir">Kapat</button>
+  </div>
+
+  <!-- ── görünüm: SOHBETLER ── -->
+  <section class="gorunum" id="gorunum-sohbetler">
+    <header class="bar">
+      <div class="baslik">
+        <b class="wordmark"><span class="narc">NarC</span><span class="hat">HAT</span></b>
+        <small><span class="ikon" style="width:13px;height:13px"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span> uçtan-uca şifreli</small>
+      </div>
+      <!-- N5: NarcOsystem — misyonun kalbi, kalıcı üst-bar girişi (Ayarlar'da ikinci girişi var) -->
+      <button class="bar-btn" id="narcosystemBtn" title="NarcOsystem" aria-label="NarcOsystem — diğer ürünlerimiz">
+        <span class="ikon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><ellipse cx="12" cy="12" rx="10" ry="4"/></svg></span>
+      </button>
+      <button class="bar-btn vurgu" id="bildirimBtn" title="Bildirimler" aria-label="Bildirimler">
+        <span class="ikon"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span>
+      </button>
+    </header>
+    <div class="arama">
+      <input id="aramaIn" placeholder="Ara — sohbet veya mesaj…" autocapitalize="none" spellcheck="false" autocomplete="off">
+    </div>
+    <div class="liste" id="odalarSar">
+      <div id="odalar"></div>
+      <div id="globalAra" class="global-ara gizli"></div>
+    </div>
+  </section>
+
+  <!-- ── görünüm: KİŞİLER ── -->
+  <section class="gorunum gizli" id="gorunum-kisiler">
+    <header class="bar">
+      <div class="baslik"><b>Kişiler</b></div>
+      <button class="bar-btn vurgu" id="ekleBtn" title="Ekle" aria-label="Kişi ekle veya grup oluştur">
+        <span class="ikon"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span>
+      </button>
+    </header>
+
+    <!-- "+" menüsü: Kişi Ekle / Grup Oluştur -->
+    <div class="ekle-menu gizli" id="ekleMenu">
+      <button id="kisiEkleAc" class="gri" style="display:inline-flex;align-items:center;justify-content:center;gap:8px">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Kişi Ekle</button>
+      <button id="grupOlusturAc" class="gri" style="display:inline-flex;align-items:center;justify-content:center;gap:8px">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Grup Oluştur</button>
+    </div>
+
+    <!-- kişi ekle paneli (gizli) -->
+    <div class="ayar-grup gizli" id="kisiEklePanel" style="padding-bottom:0">
+      <div class="ayar-kart" style="flex-direction:column;align-items:stretch;gap:10px">
+        <b>👤 Kişi ekle <small style="font-weight:400;color:var(--text-2)">(kullanıcı adıyla)</small></b>
+        <input id="kisiEkleIn" placeholder="kullanıcı adı" autocapitalize="none" spellcheck="false" autocomplete="off">
+        <div style="display:flex;gap:8px">
+          <button id="kisiEkleBtn" class="tam">Ekle</button>
+          <button id="kisiEkleIptal" class="gri">Vazgeç</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- grup kurma paneli (gizli) -->
+    <div class="ayar-grup gizli" id="grupPanel" style="padding-bottom:0">
+      <div class="ayar-kart" style="flex-direction:column;align-items:stretch;gap:10px">
+        <b>👥 Grup oluştur <small style="font-weight:400;color:var(--text-2)">(en çok 4 kişi)</small></b>
+        <select id="grupUye" multiple size="4"></select>
+        <div style="display:flex;gap:8px">
+          <button id="grupBtn" class="tam">Grubu kur</button>
+          <button id="grupIptal" class="gri">Vazgeç</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="liste" id="kisiler"></div>
+  </section>
+
+  <!-- ── görünüm: AYARLAR ── -->
+  <section class="gorunum gizli" id="gorunum-ayarlar">
+    <header class="bar"><div class="baslik"><b>Ayarlar</b></div></header>
+    <div class="ayar-grup">
+      <div class="ayar-kart" style="flex-direction:column;align-items:stretch;gap:10px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="avatar buyuk" id="benAvatar" title="Profil fotoğrafı seç" style="cursor:pointer">?</div>
+          <div class="govde" style="flex:1">
+            <b id="benKim">@</b>
+            <small>Fotoğrafa dokun · görünen adını yaz</small>
+          </div>
+        </div>
+        <input type="file" id="avatarIn" accept="image/*" hidden>
+        <input id="adIn" type="text" maxlength="40" placeholder="Görünen ad (örn. Mustafa Hoca)">
+        <button id="profilKaydetBtn">Profili kaydet</button>
+      </div>
+
+      <div class="ayar-kart">
+        <div class="govde"><b>NarcOsystem</b><small>Diğer ürünlerimizi keşfet</small></div>
+        <button id="narcosystemAyarBtn" class="gri">Aç</button>
+      </div>
+
+      <div class="ayar-kart">
+        <div class="govde"><b>Görünüm</b><small>Açık / koyu / sistem</small></div>
+        <div class="segment" id="temaSegment" role="group" aria-label="Tema">
+          <button data-tema="light">Açık</button>
+          <button data-tema="dark">Koyu</button>
+          <button data-tema="auto">Sistem</button>
+        </div>
+      </div>
+
+      <div class="ayar-kart">
+        <div class="govde"><b>Renk teması</b><small>Nar / Okyanus / Orman</small></div>
+        <div class="segment" id="paletSegment" role="group" aria-label="Renk teması">
+          <button data-palet="nar">Nar</button>
+          <button data-palet="okyanus">Okyanus</button>
+          <button data-palet="orman">Orman</button>
+        </div>
+      </div>
+
+      <div class="ayar-kart">
+        <div class="govde"><b>Yazı boyu</b><small>Küçük / normal / büyük</small></div>
+        <div class="segment" id="yaziSegment" role="group" aria-label="Yazı boyu">
+          <button data-yazi="kucuk">Küçük</button>
+          <button data-yazi="normal">Normal</button>
+          <button data-yazi="buyuk">Büyük</button>
+        </div>
+      </div>
+
+      <div class="ayar-kart">
+        <div class="govde"><b>Yüksek kontrast</b><small>Yazı ve kenarları belirginleştir</small></div>
+        <button id="kontrastBtn" class="gri" aria-pressed="false">Kapalı</button>
+      </div>
+
+      <div class="ayar-kart">
+        <div class="govde"><b>Bildirimler</b><small id="bildirimDurum">Yeni mesajlarda uyar</small></div>
+        <button id="bildirimAyarBtn" class="gri">Aç</button>
+      </div>
+
+      <div class="ayar-kart">
+        <div class="govde"><b>Sesli uyarı</b><small id="sesUyariDurum">Görmediğin mesaj gelince kısa ses</small></div>
+        <button id="sesUyariBtn" class="gri">Açık</button>
+      </div>
+
+      <div class="ayar-kart">
+        <div class="govde"><b>Son görülme & çevrimiçi</b><small>Kapatırsan kişiler seni görmez; sen de onları göremezsin</small></div>
+        <button id="gizliSonBtn" class="gri">Açık</button>
+      </div>
+
+      <div class="ayar-kart">
+        <div class="govde"><b>Okundu bilgisi (✓✓)</b><small>Kapatırsan okuduğun ✓✓ görünmez; sen de karşının ✓✓'sini görmezsin</small></div>
+        <button id="gizliOkunduBtn" class="gri">Açık</button>
+      </div>
+
+      <div class="ayar-kart">
+        <div class="govde"><b>Yıldızlı mesajlar</b><small>Sakladığın önemli mesajlar</small></div>
+        <button id="yildizliMsgBtn" class="gri">Göster</button>
+      </div>
+
+      <div class="ayar-kart">
+        <div class="govde"><b>Cihazlarım</b><small>Aynı hesabı telefon + bilgisayarda kullan</small></div>
+        <button id="cihazBaglaBtn" class="gri">Yeni cihaz bağla</button>
+      </div>
+
+      <div class="ayar-kart" style="flex-direction:column;align-items:stretch;gap:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div class="govde"><b>Uygulama kilidi</b><small id="kilitDurum">Kapalı — açılışta parola sorulmaz</small></div>
+          <button id="kilitToggleBtn" class="gri">Aç</button>
+        </div>
+        <div class="gizli" id="kilitKurPanel" style="display:flex;gap:8px">
+          <input id="kilitParolaIn" type="password" placeholder="açılış parolası (en az 4)" autocomplete="new-password" autocapitalize="none">
+          <button id="kilitKaydetBtn">Kaydet</button>
+        </div>
+      </div>
+
+      <button id="cikisBtn" class="gri tam" style="margin-top:8px;color:var(--danger);display:flex;align-items:center;justify-content:center;gap:8px">
+        <span class="ikon" style="width:18px;height:18px"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></span>
+        Çıkış yap
+      </button>
+      <p class="ince" style="text-align:center">NarChat · uçtan-uca şifreli · verisi bize ait</p>
+    </div>
+  </section>
+
+  <!-- ── görünüm: ARAMALAR ── -->
+  <section class="gorunum gizli" id="gorunum-aramalar">
+    <header class="bar">
+      <div class="baslik"><b>Aramalar</b></div>
+      <button class="bar-btn danger" id="aramaGecmisiTemizleBtn" title="Geçmişi temizle" aria-label="Arama geçmişini temizle" style="color:var(--danger);font-size:14px;font-weight:600;background:transparent;border:none;cursor:pointer">
+        Temizle
+      </button>
+    </header>
+    <div class="liste" id="aramalar"></div>
+    <div id="aramalarBos" class="bos gizli">
+      <span class="resim" style="font-size:48px;display:block;text-align:center;margin-bottom:12px">📞</span>
+      <b>Henüz arama yok</b>
+      <p>Yaptığın ve gelen sesli/görüntülü aramalar burada görünür.</p>
+    </div>
+  </section>
+
+  <!-- ── ALT NAVİGASYON ── -->
+  <nav class="alt-nav" id="altNav">
+    <button data-gor="sohbetler" class="aktif">
+      <span class="ikon"><svg viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg></span>
+      Sohbetler
+    </button>
+    <button data-gor="aramalar" style="position:relative">
+      <span class="ikon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
+      </span>
+      Aramalar
+      <span class="rozet gizli" id="aramaRozeti" style="position:absolute;top:3px;right:calc(50% - 22px);min-width:16px;height:16px;font-size:10px;padding:0 4px">0</span>
+    </button>
+    <button data-gor="kisiler">
+      <span class="ikon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+      Kişiler
+    </button>
+    <button data-gor="ayarlar">
+      <span class="ikon"><svg viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg></span>
+      Ayarlar
+    </button>
+  </nav>
+
+  <!-- ── ODA EKRANI (overlay) ── -->
+  <section class="gorunum gizli" id="gorunum-oda">
+    <header class="bar">
+      <button class="bar-btn" id="geriBtn" aria-label="Geri">
+        <span class="ikon"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+      </button>
+      <div class="avatar kucuk" id="odaAvatar">?</div>
+      <div class="baslik" id="odaBaslikSar">
+        <b id="odaBaslik">Oda</b>
+        <small id="odaUyeler" style="color:var(--text-2)"></small>
+      </div>
+      <!-- Sesli + görüntülü arama — 1:1'de CANLI (FAZ H1; odaAc 1:1 için gösterir, grup arama = H2) -->
+      <button class="bar-btn gizli" id="aramaBtn" title="Sesli ara" aria-label="Sesli ara">
+        <span class="ikon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+      </button>
+      <button class="bar-btn gizli" id="aramaVideoBtn" title="Görüntülü ara" aria-label="Görüntülü ara">
+        <span class="ikon"><svg viewBox="0 0 24 24"><path d="m23 7-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></span>
+      </button>
+      <button class="bar-btn" id="kaybolanBtn" title="Kaybolan mesajlar" aria-label="Kaybolan mesajlar">
+        <span class="ikon"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/></svg></span>
+      </button>
+      <button class="bar-btn" id="sohbetAraBtn" title="Sohbette ara" aria-label="Sohbette ara">
+        <span class="ikon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg></span>
+      </button>
+      <button class="bar-btn" id="odaAdBtn" title="Oda adını düzenle" aria-label="Oda adını düzenle">
+        <span class="ikon"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+      </button>
+    </header>
+    <div class="sabit-bar gizli" id="sabitBar">
+      <span class="sabit-im" aria-hidden="true">📌</span>
+      <span class="sabit-on" id="sabitOn"></span>
+      <button class="sabit-x" id="sabitKaldirBtn" type="button" title="Sabiti kaldır" aria-label="Sabiti kaldır">✕</button>
+    </div>
+    <div class="secim-bar gizli" id="secimBar">
+      <button class="bar-btn" id="secimKapat" type="button" title="Seçimi iptal" aria-label="Seçimi iptal">✕</button>
+      <div class="secim-say"><b id="secimSay">0 seçili</b></div>
+      <button class="bar-btn" id="secimIletBtn" type="button" title="Seçilenleri ilet" aria-label="Seçilenleri ilet">↪</button>
+      <button class="bar-btn" id="secimSilBtn" type="button" title="Seçilenleri sil" aria-label="Seçilenleri sil">🗑</button>
+    </div>
+    <div class="sohbet-ara-bar gizli" id="sohbetAraBar">
+      <input id="sohbetAraIn" type="search" placeholder="Sohbette ara…" autocomplete="off" enterkeyhint="search">
+      <span class="sohbet-ara-say" id="sohbetAraSay"></span>
+      <button class="sohbet-ara-nav" id="sohbetAraOnce" type="button" title="Önceki" aria-label="Önceki eşleşme">▲</button>
+      <button class="sohbet-ara-nav" id="sohbetAraSonra" type="button" title="Sonraki" aria-label="Sonraki eşleşme">▼</button>
+      <button class="sohbet-ara-nav" id="sohbetAraKapat" type="button" title="Kapat" aria-label="Aramayı kapat">✕</button>
+    </div>
+    <div class="akis" id="akis"></div>
+    <div class="yanit-bar gizli" id="yanitBar">
+      <div class="yanit-bar-ic">
+        <span class="yanit-bar-kim" id="yanitBarKim"></span>
+        <span class="yanit-bar-on" id="yanitBarOn"></span>
+      </div>
+      <button class="yanit-bar-x" id="yanitIptalBtn" type="button" aria-label="Yanıtı iptal et">✕</button>
+    </div>
+    <div class="yanit-bar duzenle-bar gizli" id="duzenleBar">
+      <div class="yanit-bar-ic">
+        <span class="yanit-bar-kim" id="duzenleBarKim">✏️ Mesajı düzenle</span>
+        <span class="yanit-bar-on" id="duzenleBarOn"></span>
+      </div>
+      <button class="yanit-bar-x" id="duzenleIptalBtn" type="button" aria-label="Düzenlemeyi iptal et">✕</button>
+    </div>
+    <div class="komp" id="komp">
+      <input type="file" id="medyaIn" accept="image/*,video/*,application/pdf,*/*" hidden>
+      <input type="file" id="kameraIn" accept="image/*" capture="environment" hidden>
+      <button class="emoji-btn" id="ekBtn" aria-label="Dosya/foto ekle">📎</button>
+      <button class="emoji-btn" id="kameraBtn" aria-label="Kamerayla çek" title="Kamera">📷</button>
+      <button class="emoji-btn" id="emojiBtn" aria-label="Emoji">🙂</button>
+      <textarea id="mesajIn" placeholder="Mesaj yaz…" rows="1" disabled></textarea>
+      <button class="emoji-btn" id="sesBtn" aria-label="Sesli mesaj kaydet" title="Sesli mesaj">🎤</button>
+      <button class="gonder" id="gonderBtn" aria-label="Gönder" disabled>
+        <span class="ikon"><svg viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg></span>
+      </button>
+      <!-- sesli mesaj kayıt barı (kayıt sırasında komp'u kaplar) -->
+      <div class="ses-kayit-bar gizli" id="sesKayitBar">
+        <button class="ses-kayit-iptal" id="sesKayitIptal" aria-label="Kaydı iptal et" title="İptal">🗑</button>
+        <span class="ses-kayit-nokta" aria-hidden="true"></span>
+        <span class="ses-kayit-sure" id="sesKayitSure">0:00</span>
+        <span class="ses-kayit-etiket">Kaydediliyor…</span>
+        <button class="ses-kayit-gonder" id="sesKayitGonder" aria-label="Sesli mesajı gönder" title="Gönder">
+          <span class="ikon"><svg viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg></span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── N5: NARCOSYSTEM VİTRİN — üst-bar/Ayarlar'dan açılan tam-ekran overlay (altNav'dan bağımsız, #gorunum-oda deseni) ── -->
+  <section class="gorunum gizli" id="gorunum-narcosystem">
+    <header class="bar">
+      <button class="bar-btn" id="narcosystemGeriBtn" aria-label="Geri">
+        <span class="ikon"><svg viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+      </button>
+      <div class="baslik"><b>NarcOsystem</b></div>
+    </header>
+    <div class="liste" id="narcosystemListe"></div>
+    <div id="narcosystemBos" class="bos gizli">
+      <span class="resim" style="font-size:48px;display:block;text-align:center;margin-bottom:12px">🪐</span>
+      <b>Yakında</b>
+      <p>NarcOsystem ürünleri burada listelenecek.</p>
+    </div>
+  </section>
+
+</div>
+
+<!-- ── GELEN ARAMA EKRANI (overlay) — Faz 2 sesli arama ── -->
+<div class="gelen-arama gizli" id="gelenArama" role="dialog" aria-modal="true" aria-label="Gelen arama">
+  <div class="gelen-ic">
+    <div class="avatar dev pulse" id="gelenAvatar">?</div>
+    <div class="gelen-ad" id="gelenAd">@kullanıcı</div>
+    <div class="gelen-alt" id="gelenAlt">📞 Sesli arama…</div>
+    <div class="gelen-btnler">
+      <button class="cevap-btn reddet" id="aramaReddetBtn" aria-label="Reddet" title="Reddet">
+        <span class="ikon"><svg viewBox="0 0 24 24"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"/><path d="m2 2 20 20"/></svg></span>
+      </button>
+      <button class="cevap-btn cevapla" id="aramaCevaplaBtn" aria-label="Cevapla" title="Cevapla">
+        <span class="ikon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+      </button>
+    </div>
+  </div>
+</div>
+<!-- ── SESLİ ARAMA EKRANI (overlay) — FAZ E: kiminle + süre + kontroller (mute · hoparlör/ahize · bitir) ── -->
+<div class="arama-sahne gizli" id="aramaSahne" role="dialog" aria-modal="true" aria-label="Sesli arama">
+  <button class="arama-kucult" id="aramaKucultBtn" aria-label="Küçült" title="Küçült (arama sürer)">
+    <span class="ikon"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
+  </button>
+  <div class="arama-sahne-ic">
+    <div class="avatar pulse" id="aramaSahneAvatar">?</div>
+    <div class="arama-sahne-ad" id="aramaSahneAd">@kullanıcı</div>
+    <div class="arama-sahne-durum" id="aramaSahneDurum">Bağlanılıyor…</div>
+    <div class="arama-sahne-sure gizli" id="aramaSahneSure">00:00</div>
+  </div>
+  <div class="arama-kontrol">
+    <button class="kontrol-btn" id="muteBtn" aria-label="Mikrofonu sustur"><span class="ikn" aria-hidden="true">🎤</span><span class="etk">Sustur</span></button>
+    <button class="kontrol-btn" id="hoparlorBtn" aria-label="Hoparlör / ahize"><span class="ikn" aria-hidden="true">🔊</span><span class="etk">Hoparlör</span></button>
+    <button class="kontrol-btn bitir" id="aramaKapatBtn" aria-label="Aramayı bitir"><span class="ikn" aria-hidden="true">📞</span><span class="etk">Bitir</span></button>
+  </div>
+</div>
+<!-- ── GÖRÜNTÜLÜ ARAMA SAHNESİ (overlay) — FAZ H1: 1:1 CANLI ── -->
+<!-- Karşı tarafın görüntüsü tam ekran; kendi kameran köşede PiP. Medya uçtan-uca DTLS-SRTP.
+     Üst kontroller: küçült · süre · ön/arka çevir · kamera aç/kapa · mute · hoparlör/ahize · bitir. -->
+<div class="video-sahne gizli" id="videoSahne" aria-label="Görüntülü arama">
+  <video id="uzakVideo" class="uzak-video" autoplay playsinline></video>
+  <video id="yerelVideo" class="yerel-video" autoplay playsinline muted></video>
+  <div class="video-ust">
+    <button class="arama-kucult" id="videoKucultBtn" aria-label="Küçült" title="Küçült (arama sürer)">
+      <span class="ikon"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
+    </button>
+    <span class="video-sure gizli" id="videoSure">00:00</span>
+    <button class="mini-kontrol" id="videoCevirBtn" aria-label="Kamerayı çevir (ön/arka)" title="Ön/arka kamera"><span class="ikn" aria-hidden="true">🔄</span></button>
+    <button class="mini-kontrol" id="videoKameraBtn" aria-label="Kamerayı aç/kapat" title="Kamera aç/kapat"><span class="ikn" aria-hidden="true">📹</span></button>
+    <button class="mini-kontrol" id="videoMuteBtn" aria-label="Mikrofonu sustur"><span class="ikn" aria-hidden="true">🎤</span></button>
+    <button class="mini-kontrol" id="videoHoparlorBtn" aria-label="Hoparlör / ahize"><span class="ikn" aria-hidden="true">🔊</span></button>
+  </div>
+  <button class="video-kapat" id="videoKapatBtn" aria-label="Aramayı bitir" title="Bitir">
+    <span class="ikon"><svg viewBox="0 0 24 24"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"/><path d="m2 2 20 20"/></svg></span>
+  </button>
+</div>
+<!-- ── GRUP ARAMA SAHNESİ (overlay) — FAZ H2: mesh (3-4 kişi sesli/görüntülü) ── -->
+<!-- Her katılımcı bir tile (kendi + uzak eşler). Görüntülüde video, seslide avatar. Medya uçtan-uca DTLS-SRTP. -->
+<div class="grup-sahne gizli" id="grupSahne" aria-label="Grup araması">
+  <div class="grup-ust">
+    <button class="arama-kucult" id="grupKucultBtn" aria-label="Küçült" title="Küçült (arama sürer)">
+      <span class="ikon"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
+    </button>
+    <span class="grup-baslik" id="grupBaslik">Grup araması</span>
+    <span class="video-sure gizli" id="grupSure">00:00</span>
+  </div>
+  <div class="grup-grid" id="grupGrid"></div>
+  <div class="grup-kontrol">
+    <button class="mini-kontrol" id="grupCevirBtn" aria-label="Kamerayı çevir (ön/arka)" title="Ön/arka kamera"><span class="ikn" aria-hidden="true">🔄</span></button>
+    <button class="mini-kontrol" id="grupKameraBtn" aria-label="Kamerayı aç/kapat" title="Kamera aç/kapat"><span class="ikn" aria-hidden="true">📹</span></button>
+    <button class="mini-kontrol" id="grupMuteBtn" aria-label="Mikrofonu sustur" title="Sustur"><span class="ikn" aria-hidden="true">🎤</span></button>
+    <button class="video-kapat grup-ayril" id="grupKapatBtn" aria-label="Aramadan ayrıl" title="Ayrıl">
+      <span class="ikon"><svg viewBox="0 0 24 24"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"/><path d="m2 2 20 20"/></svg></span>
+    </button>
+  </div>
+</div>
+<!-- karşı tarafın sesi (uçtan-uca DTLS-SRTP) buraya bağlanır → ses duyulur (görüntülüde de ses buradan) -->
+<audio id="uzakSes" autoplay playsinline></audio>
+
+<!-- ── CİHAZ BAĞLAMA KODU (anahtarı-olan cihazda gösterilir) ── -->
+<div class="bagla-pop gizli" id="baglaKodPop" role="dialog" aria-modal="true" aria-label="Cihaz bağlama kodu">
+  <div class="bagla-ic">
+    <h2>🔗 Yeni cihaz bağla</h2>
+    <p>Diğer cihazında <b>aynı hesapla</b> giriş yap, sonra bu kodu <b>Cihaz bağla</b> ekranına gir:</p>
+    <div class="bagla-kod" id="baglaKod">…</div>
+    <button id="baglaKopyala" class="tam">Kodu kopyala</button>
+    <p class="ince" id="baglaLink"></p>
+    <p class="ince">Kod <b>tek kullanımlık</b> (bir kez girilince yok olur) ve ~10 dk sonra geçersiz olur. Yalnız kendi cihazına gir — kimseyle paylaşma.</p>
+    <button id="baglaKapat" class="gri tam">Kapat</button>
+  </div>
+</div>
+
+<script type="module" src="/app.js?v=59"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+; NarChat — systemd unit (generic template)
+;
+; Install:
+;   sudo cp deploy/systemd/narchat.service /etc/systemd/system/narchat.service
+;   sudo systemctl daemon-reload && sudo systemctl enable --now narchat
+;
+; Adjust User=, WorkingDirectory= and the Environment= lines to match your box.
+; Every setting the server reads is an environment variable, so this file is the
+; single place your deployment is configured — see docs/SELF-HOSTING.md.
+
+[Unit]
+Description=NarChat end-to-end encrypted messaging server
+Documentation=https://github.com/NarchTech/narchat
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+; --- who and where -----------------------------------------------------------
+; Create a dedicated unprivileged user first:  sudo useradd --system --home /opt/narchat narchat
+User=narchat
+Group=narchat
+WorkingDirectory=/opt/narchat
+
+; --- configuration -----------------------------------------------------------
+; The server needs no configuration at all to start: it binds 127.0.0.1 on the
+; port below and generates its own secrets on first run. Note that the bind
+; address is fixed in code, not an environment variable — reaching the server
+; from another machine is a reverse-proxy or tunnel job, deliberately. See
+; docs/SELF-HOSTING.md, which also documents the one-line change if you want it
+; to listen on your private network directly.
+Environment=NARCHAT_PORT=8101
+; State directory. An absolute path is recommended so data never depends on the
+; working directory. This is where accounts, ciphertext and the auto-generated
+; server secrets live — back up this directory, and nothing else.
+Environment=NARCHAT_VERI=/opt/narchat/veri
+; Web Push contact subject — a mailto: address you control, shown to push services.
+Environment=NARCHAT_VAPID_SUB=mailto:admin@example.com
+
+; Optional: open registration (a rate-limited invite-code faucet). Off by default:
+; without it, accounts exist only by invitation from someone who already has one.
+;Environment=NARCHAT_KOD_ACIK=1
+
+; Optional: your own TURN server, for calls that must traverse strict NATs.
+; NARCHAT_TURN_CRED is a secret — it is the only secret this file ever holds.
+;Environment=NARCHAT_TURN_HOST=turn.example.com
+;Environment=NARCHAT_TURN_PORT=3478
+;Environment=NARCHAT_TURN_USERNAME=narchat
+;Environment=NARCHAT_TURN_CRED=change-me
+
+; Compliance variant only (branch `compliant`): keep connection records.
+; With the flag unset, that branch behaves exactly like the reference — the
+; record-keeping module is not even imported.
+;Environment=NARCHAT_TRAFIK_KAYIT=1
+;Environment=NARCHAT_TRAFIK_SAKLAMA_GUN=365
+
+ExecStart=/usr/bin/python3 /opt/narchat/mesaj_server.py
+Restart=on-failure
+RestartSec=5
+
+; --- hardening ---------------------------------------------------------------
+; The server only ever needs to write inside its own directory (veri/).
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/narchat/veri
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=multi-user.target

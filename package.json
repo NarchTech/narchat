@@ -1,0 +1,26 @@
+{
+  "name": "narchat",
+  "version": "1.0.0",
+  "description": "> Faz-1 **iskelet** (Marcus bootstrap, 2026-06-26). Çekirdek **E2E yazışma KANITLANDI**. > Sahip: MERKÜR vault (`Kaynak/MERKUR/`). Plan: `~/.claude/plans/cryptic-discovering-valiant.md`.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:www": "rm -rf www && cp -R static www"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "playwright-core": "^1.61.1"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5"
+  }
+}

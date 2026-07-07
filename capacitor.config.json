@@ -1,0 +1,16 @@
+{
+  "appId": "com.narchviz.narchat",
+  "appName": "NarChat",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": false,
+    "allowNavigation": [
+      "narchat.narchviz.com"
+    ]
+  },
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {}
+}

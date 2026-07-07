@@ -1,0 +1,18 @@
+# NarChat — commit edilmeyecekler
+# DİKKAT: .gitignore satır-içi yorum DESTEKLEMEZ — açıklama yalnız tam-satır (#) olur.
+# veri/ = oturum sırrı (.gizli) + VAPID özel anahtar (.vapid.pem) + kullanıcı/mesaj deposu — GİZLİ
+veri/
+# yedeklilik (yol değişse bile sırlar asla sızmasın):
+*.pem
+.gizli
+push_aboneler.json
+node_modules/
+*.log
+.DS_Store
+__pycache__/
+# FAZ N3: bundled Capacitor webDir — `npm run build:www` ile static/'ten türetilir, kaynak DEĞİL
+# (tek kaynak = static/; PWA ve APK aynı dosyalardan). android/app/src/main/assets/public de aynı sebeple türetilir.
+www/
+# FAZ N4: imzalı release APK dağıtımı — büyük ikili dosya, git'e girmez (repo boyutu + kamuya-açılış
+# Tayfun cihaz-testinden SONRA "kod.html"den bağlanır; bu klasör o güne dek BOŞ kalır).
+static/apk/
