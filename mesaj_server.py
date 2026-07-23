@@ -70,6 +70,52 @@ NARCHAT_KOD_GUNLUK = int(os.environ.get("NARCHAT_KOD_GUNLUK", "50"))
 # İnsan-cömert (paylaşımlı NAT/ofis 8'e kadar sığar), kötüye-kullanım-tight (bir IP global 50'nin
 # en çok %16'sını alabilir → global kotayı tüketmek için ≥7 ayrı IP gerekir).
 NARCHAT_KOD_IP_GUNLUK = int(os.environ.get("NARCHAT_KOD_IP_GUNLUK", "8"))
+
+# ── UYUMLU SÜRÜM / WP1: 5651 m.2/1-j trafik-bilgisi kaydı (bkz. trafik_kayit.py) ──
+# Varsayılan KAPALI -> referans davranış birebir korunur (test [E1]); chat.narch.tech dağıtımı 1 yapar.
+# Kayıt İÇERİK TAŞIYAMAZ (modül imza+şema kilitli; test [2]/[3b]/[E3]). IP burada HAM yazılır — referans
+# sürümün HMAC-anonimleştirmesinden bilinçli sapma, kanun gereği; aydınlatma metninde beyan edilir (WP2).
+NARCHAT_TRAFIK_KAYIT = os.environ.get("NARCHAT_TRAFIK_KAYIT", "0") == "1"
+TRAFIK = None
+if NARCHAT_TRAFIK_KAYIT:
+    # Fail-fast BİLİNÇLİ (ikinci-göz 🟠-3/🟡-3): env açıkken modül eksikse ya da saklama süresi
+    # yasal aralık (365-730) dışındaysa servis HİÇ BAŞLAMAZ — kayıt yükümlülüğü sessizce yok olamaz.
+    from trafik_kayit import TrafikKayit
+    TRAFIK = TrafikKayit(os.environ.get("NARCHAT_TRAFIK_DIZIN") or os.path.join(VERI, "trafik"),
+                         saklama_gun=int(os.environ.get("NARCHAT_TRAFIK_SAKLAMA_GUN", "365")))
+    TRAFIK.imha()   # 🟠-4: açılışta bekleyen imha (atıl/kapalı geçen sürenin telafisi)
+
+    def _trafik_imha_dongusu():
+        while True:
+            time.sleep(86400)
+            try:
+                TRAFIK.imha()
+            except Exception as e:
+                print("TRAFIK-IMHA HATASI:", e, file=sys.stderr)
+    threading.Thread(target=_trafik_imha_dongusu, daemon=True).start()   # 🟠-4: atıl sunucuda da imha işler
+
+# 🟠-2: kalıcı kayıt-hatası izlemesi — ardışık hata eşiğinde yüksek-sesli alarm (+ ops. operatör komutu).
+TRAFIK_HATA_ESIK = 10
+_trafik_hata = {"n": 0}
+# 🟠-1: SSE per-IP bağlantı kovası — YALNIZ kayıt-modu açıkken uygulanır (kapalıyken referans davranış
+# birebir). Gerekçe: referansta /api/akis iz bırakmaz; kayıt-modunda her bağlantı kalıcı satır yazar →
+# authlu istemciden sınırsız log-amplifikasyonu/disk-doldurma. EventSource ~3sn retry meşru → kova cömert.
+SSE_LIMIT = int(os.environ.get("NARCHAT_SSE_LIMIT", "60"))
+SSE_PENCERE = int(os.environ.get("NARCHAT_SSE_PENCERE", "60"))
+_SSE_KOVA, _SSE_KILIT = {}, threading.Lock()
+
+def _sse_oran_asildi(ip):
+    simdi = int(time.time())
+    with _SSE_KILIT:
+        v = _SSE_KOVA.get(ip)
+        if not v or simdi - v[0] >= SSE_PENCERE:
+            if len(_SSE_KOVA) > 4096:   # bellek emniyeti: süresi geçen pencereleri süpür
+                for k in [k for k, w in _SSE_KOVA.items() if simdi - w[0] >= SSE_PENCERE]:
+                    _SSE_KOVA.pop(k, None)
+            _SSE_KOVA[ip] = [simdi, 1]
+            return False
+        v[1] += 1
+        return v[1] > SSE_LIMIT
 NARC_KOD_TTL = 72 * 3600   # tek-kullanımlık + 72 saat ömür
 
 # Oran-sınırı (Adım 5c): IP başına auth (kayıt/giriş) denemesi — kaba-kuvvet/kayıt-spam'i hafifletir.
@@ -187,8 +233,9 @@ def _oturum_coz(tok):
         beklenen = hmac.new(SIR, govde.encode(), hashlib.sha256).hexdigest()
         if not hmac.compare_digest(beklenen, sig): return None
         if _now() > int(exp): return None
-        mevcut_nesil = _oku(F_KULL, {}).get(kullanici, {}).get("oturum_nesli", 0)
-        if int(nesil) != mevcut_nesil: return None   # nesil artırıldıysa (iptal) eski token artık geçersiz
+        rec = _oku(F_KULL, {}).get(kullanici, {})
+        if int(nesil) != rec.get("oturum_nesli", 0): return None   # nesil artırıldıysa (iptal) eski token artık geçersiz
+        if rec.get("askiya"): return None   # WP3: askıya alınan hesap her authlu uçtan kilitlenir (derinlemesine savunma)
         return kullanici
     except Exception:
         return None
@@ -477,6 +524,32 @@ class H(BaseHTTPRequestHandler):
             if xff: return xff
         return self.client_address[0]
 
+    def _trafik(self, olay, kimlik, bayt=0):
+        # WP1 kancası: uyumlu sürümde yasal kayıt üretir; kapalıyken (referans davranış) no-op.
+        # Kayıt hatası istek akışını KESMEZ ama sessizce de yutulmaz (stderr -> servis logu):
+        # 5651-kaydı servis-kesintisi pahasına değildir; kalıcı kayıt-hatası ayrı bir alarm konusudur.
+        if TRAFIK is None: return
+        try:
+            # 🔴-1: CDN/tünel istemci kaynak-portunu origin'e İLETMEZ — cloudflared'in yerel geçici
+            # portunu "istemci portu" diye yazmak yasal kayda YANLIŞ veri sokar. CF-yolunda 0 =
+            # "yapısal olarak ölçülemedi" (aydınlatma metni + runbook beyanı; A3 CF-çıkışında gerçeğe kavuşur).
+            port = 0 if self.headers.get("CF-Connecting-IP") else self.client_address[1]
+            TRAFIK.olay(olay, kimlik=kimlik, ip=self._istemci_ip(), bayt=int(bayt or 0), port=port)
+            _trafik_hata["n"] = 0
+        except Exception as e:
+            _trafik_hata["n"] += 1
+            print("TRAFIK-KAYIT HATASI:", e, file=sys.stderr)
+            if _trafik_hata["n"] == TRAFIK_HATA_ESIK:   # 🟠-2: izlemesiz fail-open olmaz
+                print("🔴 TRAFIK-KAYIT: %d ARDIŞIK HATA — 5651 kayıt yükümlülüğü AKSIYOR; "
+                      "disk/izin denetleyin (runbook: yasal-talep)." % TRAFIK_HATA_ESIK, file=sys.stderr)
+                kmt = os.environ.get("NARCHAT_TRAFIK_ALARM_KOMUT")
+                if kmt:
+                    try:
+                        import subprocess
+                        subprocess.Popen(kmt, shell=True)
+                    except Exception:
+                        pass
+
     def _kim(self):
         tok = self._cookie()
         k = _oturum_coz(tok) if tok else None
@@ -484,8 +557,14 @@ class H(BaseHTTPRequestHandler):
         return k
 
     # --- statik dosya ---
+    # WP2 uyum sayfaları: temiz-URL (uzantısız) erişim. Yalnız bu bilinen sabit adlar eşlenir
+    # (keyfî uzantı-ekleme YOK → path-traversal yüzeyi büyümez).
+    _UYUM_SAYFALARI = {"/iletisim": "/iletisim.html", "/aydinlatma": "/aydinlatma.html",
+                       "/kosullar": "/kosullar.html"}
+
     def _statik(self, yol):
         if yol == "/" or yol == "": yol = "/index.html"
+        yol = self._UYUM_SAYFALARI.get(yol, yol)
         tam = os.path.normpath(os.path.join(STATIK, yol.lstrip("/")))
         if not tam.startswith(STATIK + os.sep) or not os.path.isfile(tam):   # D1: prefix-bypass'a karşı os.sep (yazma yoluyla tutarlı)
             self._json(404, {"hata": "yok"}); return
@@ -772,6 +851,7 @@ class H(BaseHTTPRequestHandler):
                     dd.setdefault("kullanilmis", {})[davet] = {"kullanici": kullanici, "ts": _now()}
                 _atomik_yaz(F_DAVET, dd)
         tok = _oturum_uret(kullanici, kayit_gov.get("oturum_nesli", 0))
+        self._trafik("kayit", kullanici)   # WP1
         return self._json(200, {"ok": True, "kullanici": kullanici},
             ekstra=[("Set-Cookie", f"narchat_oturum={tok}; Path=/; HttpOnly; {self._cors_samesite()}; Max-Age={OTURUM_GUN*86400}")])
 
@@ -782,6 +862,8 @@ class H(BaseHTTPRequestHandler):
         kull = _oku(F_KULL, {})
         k = kull.get(kullanici)
         if not k: return self._json(401, {"hata": "hatalı giriş"})
+        if k.get("askiya"):   # WP3: operatör idari tedbiri (yasal talep/bildirim üzerine); dayanak operatör-günlüğünde
+            return self._json(403, {"hata": "hesap askıya alındı"})
         surum = k.get("surum", 1)
         sema = SEMALAR.get(surum, SEMALAR[1])
         if not sema.dogrula(gov, k, SIR):
@@ -807,6 +889,7 @@ class H(BaseHTTPRequestHandler):
                         _atomik_yaz(F_KULL, kull2)
                         k = kull2[kullanici]
         tok = _oturum_uret(kullanici, k.get("oturum_nesli", 0))
+        self._trafik("oturum", kullanici)   # WP1
         return self._json(200, {"ok": True, "kullanici": kullanici, "pubkey": k.get("pubkey"), "surum": surum, "kdf": k.get("kdf", 1)},
             ekstra=[("Set-Cookie", f"narchat_oturum={tok}; Path=/; HttpOnly; {self._cors_samesite()}; Max-Age={OTURUM_GUN*86400}")])
 
@@ -1135,6 +1218,7 @@ class H(BaseHTTPRequestHandler):
             os.makedirs(MSGDIR, exist_ok=True)
             with open(self._mesaj_yol(oda), "a", encoding="utf-8") as f:
                 f.write(json.dumps(kayit, ensure_ascii=False) + "\n")
+        self._trafik("mesaj-aktarim", kim, bayt=self.headers.get("Content-Length"))   # WP1: miktar, içerik değil (int-parse helper try'ında)
         _yayinla(oda, {"tip": "yeni-mesaj", "mesaj": kayit})
         # offline üyelere Web Push (gönderen hariç) — best-effort, içerik genel ("Yeni mesaj")
         try:
@@ -1325,6 +1409,7 @@ class H(BaseHTTPRequestHandler):
         tmp = os.path.join(MEDYADIR, mid + ".bin.tmp")
         with open(tmp, "wb") as f: f.write(data)
         os.replace(tmp, os.path.join(MEDYADIR, mid + ".bin"))
+        self._trafik("mesaj-aktarim", kim, bayt=len(data))   # WP1: medya = asıl büyük aktarım; 🟡-2: beyan değil yazılan-boyut
         return self._json(200, {"medya_id": mid})
 
     def _medya_indir(self, mid):
@@ -1384,9 +1469,13 @@ class H(BaseHTTPRequestHandler):
         q = parse_qs(u.query); oda = (q.get("oda") or [""])[0]
         kisisel = not oda                      # oda YOK = kişisel çağrı kanalı (oturum boyu açık)
         if not kisisel and not self._uye_mi(kim, oda): return self._json(403, {"hata": "üye değil"})
+        if TRAFIK is not None and _sse_oran_asildi(self._istemci_ip()):   # 🟠-1: yalnız kayıt-modunda
+            return self._json(429, {"hata": "çok sık bağlantı — biraz sonra tekrar deneyin"},
+                              ekstra=[("Retry-After", str(SSE_PENCERE))])
         kuyruk = queue.Queue(maxsize=100)
         with ABONE_KILIT:
             (ABONE_KISI.setdefault(kim, set()) if kisisel else ABONELER.setdefault(oda, set())).add(kuyruk)
+        self._trafik("baglanti", kim)   # WP1
         try:
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream; charset=utf-8")

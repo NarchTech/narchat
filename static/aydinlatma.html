@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#faf2ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#190d11" media="(prefers-color-scheme: dark)">
+<meta name="description" content="NarChat — kişisel verilerin işlenmesine ilişkin aydınlatma metni">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/tokens.css?v=43">
+<title>NarChat — Aydınlatma Metni</title>
+<style>
+  .belge { max-width: 44rem; margin: 0 auto; padding: var(--s-5); line-height: 1.7; }
+  .belge h2 { margin-top: var(--s-6); }
+  .belge table { width: 100%; border-collapse: collapse; margin: var(--s-4) 0; font-size: .95rem; }
+  .belge th, .belge td { border: 1px solid var(--border); padding: var(--s-3); text-align: left; vertical-align: top; }
+  .belge th { background: var(--surface-2); }
+  .yer-tutucu { color: var(--primary); font-weight: 600; }
+  .not { font-size: .9rem; color: var(--muted, #888); border-left: 3px solid var(--border); padding-left: var(--s-3); margin: var(--s-4) 0; }
+</style>
+</head>
+<body>
+<div class="belge">
+  <p class="ince"><a href="/">← NarChat</a></p>
+  <h1>Aydınlatma Metni</h1>
+  <p class="alt">Kişisel verilerin işlenmesine ilişkin bilgilendirme (6698 sayılı Kişisel Verilerin Korunması Kanunu m.10).</p>
+  <p class="ince">Son güncelleme: <span class="yer-tutucu">[TARİH]</span> · Bu metin, hizmetin <b>hukuka uyumlu sürümü</b> için geçerlidir.</p>
+
+  <h2>1. Veri sorumlusu</h2>
+  <p>Bu hizmetin veri sorumlusu <span class="yer-tutucu">[İŞLETMECİ ADI / UNVANI]</span>'dır. İletişim ve başvuru kanalı: <a href="/iletisim">iletişim sayfası</a>.</p>
+
+  <h2>2. İşlenen veriler</h2>
+  <p>NarChat, tasarımı gereği <b>veri-minimalisttir</b>: kayıt için ad, soyad, telefon numarası, e-posta ya da başka bir kimlik bilgisi <b>istenmez</b>. İşlenen veriler yalnızca şunlardır:</p>
+  <table>
+    <tr><th>Veri</th><th>Ne zaman / neden</th></tr>
+    <tr><td>Seçtiğiniz <b>kullanıcı adı</b> (takma ad)</td><td>Hesabınızı tanımlamak için. Gerçek kimliğinizle ilişki kurmamıza olanak vermez.</td></tr>
+    <tr><td><b>Trafik bilgisi</b>: bağlantı/kayıt/oturum/mesaj-aktarımı olaylarının zamanı, sistemdeki takma-ad kimliği, kaynak IP adresi, aktarılan veri <b>miktarı</b> (bayt) ve bağlantı noktası</td><td>5651 sayılı Kanun m.2/1-(j) uyarınca yer sağlayıcının tutması gereken bağlantı kayıtları. <b>Mesaj içeriği bu kayda GİRMEZ</b> — teknik olarak zaten okuyamıyoruz (aşağıda §4).</td></tr>
+    <tr><td>Mesaj ve medya <b>şifreli metni</b> (ciphertext)</td><td>Mesajlarınız uçtan uca şifrelidir; sunucuda yalnızca açamadığımız şifreli blob olarak saklanır (§4).</td></tr>
+  </table>
+  <p class="not">Kaynak IP adresiniz, kanunun bağlantı kaydını gerektirmesi nedeniyle <b>ham (anonimleştirilmemiş) olarak</b> tutulur. Bu, referans (tam-gizlilik) sürümdeki IP-anonimleştirmeden bilinçli ve beyan edilen bir sapmadır. Bağlantı noktası, hizmet bir içerik dağıtım ağı (Cloudflare) arkasında sunulduğu sürece <b>teknik olarak elde edilemez</b> ve kayıtta boş (0) görünür.</p>
+
+  <h2>3. İşleme amacı ve hukuki sebep</h2>
+  <p>Trafik bilgisi, yalnızca <b>5651 sayılı Kanun'un yer sağlayıcıya yüklediği yasal yükümlülüğün</b> yerine getirilmesi amacıyla işlenir (KVKK m.5/2-(ç): kanunda açıkça öngörülme). Bu veriler pazarlama, profilleme, reklam ya da üçüncü taraflarla paylaşım için <b>kullanılmaz</b>.</p>
+
+  <h2>4. İçeriği neden okuyamıyoruz</h2>
+  <p>Mesajlarınız cihazınızda şifrelenir ve yalnızca alıcının cihazında çözülür (uçtan uca şifreleme). Şifre çözme anahtarı hiçbir zaman sunucuya ulaşmaz. Bu, bir gizlilik vaadi değil, <b>mimarinin yapısal bir sonucudur</b>: geçerli bir yargı kararıyla mesaj içeriği talep edilse dahi, elimizde çözülebilir bir içerik <b>bulunmaz</b>. Sunucunun <em>göremediği</em> ile <em>gördüğü</em> arasındaki tam ayrım bilimsel makalede belgelenmiştir.</p>
+
+  <h2>5. Cloudflare (transit) beyanı</h2>
+  <p>Hizmet şu an bir içerik dağıtım ağı ve bağlantı sağlayıcısı olan <b>Cloudflare, Inc. (ABD)</b> üzerinden sunulmaktadır. Cloudflare mesaj <b>içeriğinizi göremez</b> (şifreleme hem taşıma hem uçtan uca katmanında korur), ancak bağlantı <b>üstverisini</b> (IP adresiniz, bağlantı zamanı, aktarılan veri miktarı) teknik olarak görebilir. Bu nedenle "verilerin tamamı yalnızca Türkiye'de / yalnızca bizde" biçiminde bir iddia bu mimaride <b>yapılmamaktadır</b>. Egemen (CDN'siz) mimariye geçiş bir yol haritası hedefidir; gerçekleştiğinde bu metin güncellenecektir.</p>
+
+  <h2>6. Saklama süresi</h2>
+  <p>Trafik bilgisi, 5651 sayılı Kanun'un öngördüğü süre boyunca (mevzuata göre <b>bir ilâ iki yıl</b>) saklanır; süreyi aşan kayıtlar <b>otomatik olarak imha edilir</b> — kanunun gerektirdiğinden bir gün fazla tutulmaz (KVKK veri-minimizasyonu). Şifreli mesajlar, siz ya da sohbetteki taraflar silene ya da "kaybolan mesaj" süresi dolana kadar saklanır.</p>
+
+  <h2>7. Haklarınız (KVKK m.11)</h2>
+  <p>Kişisel verilerinizle ilgili olarak; işlenip işlenmediğini öğrenme, bilgi talep etme, amacına uygun kullanılıp kullanılmadığını öğrenme, eksik/yanlış işlenmişse düzeltilmesini ve — kanunun saklama yükümlülüğü saklı kalmak kaydıyla — silinmesini isteme haklarına sahipsiniz. Başvurularınızı <a href="/iletisim">iletişim sayfasındaki</a> kanaldan iletebilirsiniz.</p>
+
+  <p class="not">Bu metin bir olgu beyanıdır; hukuki nitelendirme ya da tavsiye içermez. Nihai metin, işletmeci ve hukuk danışmanı tarafından tamamlanacaktır (yer-tutucu alanlar).</p>
+</div>
+</body>
+</html>
