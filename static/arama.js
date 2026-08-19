@@ -77,26 +77,48 @@ export function kameraKapaliMi() { return kameraKapali; }
 export function yuzKameraTipi() { return yuzKamera; }   // 'user' | 'environment' (UI ayna kararı)
 
 // ── H1: Ön/arka kamera çevir (facingMode) — mobil. replaceTrack ile akış KESİLMEZ (yeni offer yok) ──
-// Tek kameralı cihaz / izin yoksa sessizce mevcut kamerada kalır. Mevcut aç/kapa durumu korunur.
+// ⚠ Android WebView tuzağı (native APK bug'ı, 24-Tem): `facingMode: { ideal }` ZAYIF kısıttır.
+//   Çoğu telefon ön+arka kamerayı aynı anda açamaz; ideal kullanılınca getUserMedia HATA VERMEZ,
+//   sessizce MEVCUT (ön) kamerayı döndürür → buton "çalışmaz" görünür (iOS eşzamanlıyı yönetir, orada sorun yok).
+//   Çözüm 4 katman: (1) { exact } ile hedefi ZORLA, kamera açıkken (iOS burada kesintisiz geçer)
+//   (2) exact eşzamanlı açılamazsa eski kamerayı bırakıp tekrar dene (Android tek-kamera donanımı)
+//   (3) exact hiç desteklenmiyorsa { ideal } (4) hiçbiri olmazsa eski kamerayı geri yükle → kullanıcı kamerasız kalmaz.
+// _yuz kancası: sonuç yüzü GERÇEKTEN geçilen kameradır (geri-yüklemede eski yüz döner, UI yanılmaz).
+export async function kameraTrackAl(hedefYuz, eskiYuz, kapali, medya) {
+  const dene = (yuz, kesin) => navigator.mediaDevices.getUserMedia(
+    { video: { facingMode: kesin ? { exact: yuz } : { ideal: yuz } }, audio: false });
+  let akis = null, sonucYuz = hedefYuz;
+  try { akis = await dene(hedefYuz, true); }                                 // 1) exact, kamera açıkken (iOS: kesintisiz)
+  catch {
+    try { medya && medya.getVideoTracks().forEach(t => t.stop()); } catch {} // eski kamerayı bırak (Android eşzamanlı açamaz)
+    try { akis = await dene(hedefYuz, true); }                               // 2) exact, kamera serbest
+    catch {
+      try { akis = await dene(hedefYuz, false); }                           // 3) ideal (exact hiç desteklenmiyorsa)
+      catch {
+        try { akis = await dene(eskiYuz, false); sonucYuz = eskiYuz; }      // 4) geri-yükle: eski kamera, yüz değişmez
+        catch { return null; }
+      }
+    }
+  }
+  const t = akis.getVideoTracks()[0];
+  if (!t) { try { akis.getTracks().forEach(x => x.stop()); } catch {} return null; }
+  t.enabled = !kapali;                                // kullanıcı kamerayı kapattıysa çevirince de kapalı kalsın
+  return { track: t, yuz: sonucYuz };
+}
 export async function kameraCevir() {
   if (!videoIstendi || !pc || !yerelMedya) return yuzKamera;
-  const yeniYuz = yuzKamera === 'user' ? 'environment' : 'user';
-  let yeniAkis;
-  try {
-    yeniAkis = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: yeniYuz } }, audio: false });
-  } catch { return yuzKamera; }                       // çevrilemedi → değişme
-  const yeniTrack = yeniAkis.getVideoTracks()[0];
-  if (!yeniTrack) { try { yeniAkis.getTracks().forEach(t => t.stop()); } catch {} return yuzKamera; }
-  yeniTrack.enabled = !kameraKapali;                  // kullanıcı kamerayı kapattıysa çevirince de kapalı kalsın
+  const hedefYuz = yuzKamera === 'user' ? 'environment' : 'user';
+  const r = await kameraTrackAl(hedefYuz, yuzKamera, kameraKapali, yerelMedya);
+  if (!r) return yuzKamera;                           // hiçbir yolla geçilemedi → mevcutta kal
   try {
     const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
-    if (sender) await sender.replaceTrack(yeniTrack);
-    else pc.addTrack(yeniTrack, yerelMedya);
-  } catch { try { yeniTrack.stop(); } catch {} return yuzKamera; }
+    if (sender) await sender.replaceTrack(r.track);
+    else pc.addTrack(r.track, yerelMedya);
+  } catch { try { r.track.stop(); } catch {} return yuzKamera; }
   try { yerelMedya.getVideoTracks().forEach(t => { yerelMedya.removeTrack(t); t.stop(); }); } catch {}   // eski kamerayı bırak
-  try { yerelMedya.addTrack(yeniTrack); } catch {}
+  try { yerelMedya.addTrack(r.track); } catch {}
   try { if (yerelVideoEl) yerelVideoEl.srcObject = yerelMedya; } catch {}
-  yuzKamera = yeniYuz;
+  yuzKamera = r.yuz;
   try { window.__ARAMA_YUZ = yuzKamera; } catch {}    // izole test kancası
   return yuzKamera;
 }

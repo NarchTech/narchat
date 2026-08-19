@@ -53,7 +53,7 @@ async function yeniSayfa(ctx, ad) {
 }
 async function kayitOl(page, kullanici) {
   await page.fill('#gKullanici', kullanici); await page.fill('#gParola', PAROLA);
-  await page.click('#kayitBtn'); await page.waitForSelector('#sohbet:not(.gizli)', { timeout: 20000 });
+  await page.click('#kayitBtn'); await page.click('#kayitOnayTamam'); await page.waitForSelector('#sohbet:not(.gizli)', { timeout: 20000 });
 }
 async function listeyeDon(page) {
   if (await page.locator('#geriBtn').isVisible().catch(() => false)) await page.click('#geriBtn');

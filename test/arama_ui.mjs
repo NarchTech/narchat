@@ -38,7 +38,7 @@ async function kayit(ctx, kullanici){
   const page = await ctx.newPage();
   await page.goto(BASE+'/'); await uygulamaHazir(page);
   await page.fill('#gKullanici', kullanici); await page.fill('#gParola', PAROLA);
-  await page.click('#kayitBtn'); await page.waitForSelector('#sohbet:not(.gizli)', {timeout:20000});
+  await page.click('#kayitBtn'); await page.click('#kayitOnayTamam'); await page.waitForSelector('#sohbet:not(.gizli)', {timeout:20000});
   return page;
 }
 const gizliMi = (page, sel) => page.evaluate(s => { const el=document.querySelector(s); return !el || el.classList.contains('gizli'); }, sel);

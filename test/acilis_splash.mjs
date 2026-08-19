@@ -54,7 +54,7 @@ async function main(){
   // kayıt ol (cihaz modu — anahtar IndexedDB'de, parolasız açılır)
   await uygulamaHazir(p1);
   await p1.fill('#gKullanici', 'alice'); await p1.fill('#gParola', PAROLA);
-  await p1.click('#kayitBtn'); await p1.waitForSelector('#sohbet:not(.gizli)', {timeout:20000});
+  await p1.click('#kayitBtn'); await p1.click('#kayitOnayTamam'); await p1.waitForSelector('#sohbet:not(.gizli)', {timeout:20000});
   log('  ✓ alice kayıt (cihaz modu)');
 
   // (3) reload (cihaz modu) → app açılır, giriş ekranı HİÇ görünmez (flash yok)

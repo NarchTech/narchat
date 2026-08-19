@@ -12,7 +12,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/ikon-180.png">
-<link rel="stylesheet" href="/tokens.css?v=43">
+<link rel="stylesheet" href="/tokens.css?v=44">
 <title>NarChat — özel ekip sohbeti</title>
 </head>
 <body>
@@ -40,7 +40,22 @@
   <button id="girisBtn" class="tam">Giriş yap</button>
   <button id="kayitBtn" class="gri tam">Yeni hesap oluştur</button>
   <div class="hata" id="gHata"></div>
-  <p class="ince">Hesabını yalnız bu cihaz açabilir. Anahtarın paroluyla şifreli saklanır.</p>
+
+  <!-- PWA kurulum banner'ı — kurulum.js platforma göre TEK uygun eylemi çizer (kuruluysa gizli) -->
+  <div class="kurulum-banner gizli" id="kurulumBanner"></div>
+
+  <!-- Hesap teknolojisi — kayıttan önce okunması gereken gerçekler (sıfır-bilgi girişin bedeli) -->
+  <details class="hesap-detay" id="hesapDetay">
+    <summary>🔑 Hesabın nasıl çalışır? — kayıttan önce oku</summary>
+    <ul>
+      <li><b>Parolan sunucuya hiç gönderilmez.</b> Bu yüzden "parolamı unuttum" kurtarması <b>yoktur</b> — parolanı unutursan hesabına bir daha girilemez. Parolanı güvenli bir yere not et.</li>
+      <li><b>Konuşma anahtarın yalnız bu cihazda durur.</b> Sunucu mesajlarını hiçbir zaman okuyamaz — bu yüzden biz de dahil kimse silinen konuşmayı geri getiremez.</li>
+      <li><b>Başka cihazdan girmek:</b> kullanıcı adı + parolan her cihazda çalışır, ama konuşmaların açılması için ilk cihazında <b>Ayarlar → Cihazlarım → Yeni cihaz bağla</b> kodu gerekir. İlk cihazın yoksa eski konuşmaların açılamaz.</li>
+      <li><b>Gizli/özel sekmede kayıt olma</b> — sekme kapanınca anahtarın silinir, konuşmaların sonsuza dek kapanır.</li>
+      <li><b>Tarayıcı verisi temizlemek = anahtarı silmek.</b> En sağlamı: uygulamayı <b>kur</b> (üstteki düğme) ve hesabını kurulu uygulamada aç.</li>
+    </ul>
+  </details>
+
   <p class="ince"><a href="/kod.html">NARC- kayıt kodun yok mu? Ücretsiz al →</a></p>
 </div>
 
@@ -240,6 +255,11 @@
       <div class="ayar-kart">
         <div class="govde"><b>Cihazlarım</b><small>Aynı hesabı telefon + bilgisayarda kullan</small></div>
         <button id="cihazBaglaBtn" class="gri">Yeni cihaz bağla</button>
+      </div>
+
+      <div class="ayar-kart" id="kurulumAyarKart">
+        <div class="govde"><b>Uygulamayı kur</b><small id="kurulumAyarDurum">Ana ekranına / masaüstüne ekle</small></div>
+        <button id="kurulumAyarBtn" class="gri">Kur</button>
       </div>
 
       <div class="ayar-kart" style="flex-direction:column;align-items:stretch;gap:10px">
@@ -494,6 +514,75 @@
   </div>
 </div>
 
-<script type="module" src="/app.js?v=59"></script>
+<!-- ── KAYIT ONAYI (yeni hesap açmadan önce — sıfır-bilgi sistemin geri-dönüşsüz gerçekleri) ── -->
+<div class="bagla-pop gizli" id="kayitOnay" role="dialog" aria-modal="true" aria-label="Kayıttan önce bilmen gerekenler">
+  <div class="bagla-ic rehber-ic">
+    <h2>🔑 30 saniyeni ayır</h2>
+    <p style="text-align:center">NarChat gizliliğin için sıradan uygulamalardan <b>farklı</b> çalışır. Bu üç kural geri alınamaz:</p>
+    <div class="uyari-kutu">
+      <p>🚫 <b>"Parolamı unuttum" YOK.</b> Parolan sunucuya hiç gönderilmez — biz onu hiç görmeyiz, bu yüzden sıfırlayamayız da. Parolanı unutursan hesabına bir daha girilemez. <b>Şimdi güvenli bir yere not et.</b></p>
+      <p>🔑 <b>Konuşma anahtarın yalnız bu cihazda.</b> Başka cihazdan kullanıcı adı + parolayla girebilirsin ama konuşmaların açılması için <em>bu</em> cihazdan <b>Ayarlar → Cihazlarım → Yeni cihaz bağla</b> kodu gerekir. Bu cihaz kaybolur ya da verisi silinirse — ve bağlı ikinci cihazın yoksa — eski konuşmaların <b>sonsuza dek kapalı kalır; biz dahil hiç kimse, hiçbir teknoloji geri getiremez.</b></p>
+      <p>🕵️ <b>Gizli/özel sekmede kayıt olma.</b> Sekme kapanınca anahtarın silinir. iPhone/iPad'deysen kaydını <b>ana ekrana kurulu</b> uygulamada yap (giriş ekranındaki rehber).</p>
+    </div>
+    <button id="kayitOnayTamam" class="tam">Anladım — hesabımı oluştur</button>
+    <button id="kayitOnayVazgec" class="gri tam">Vazgeç</button>
+  </div>
+</div>
+
+<!-- ── iOS KURULUM REHBERİ (detaylı) — Apple tek-tuş kuruluma izin vermez; bu rehber tek yol ── -->
+<div class="bagla-pop gizli" id="iosRehber" role="dialog" aria-modal="true" aria-label="iPhone ve iPad kurulum rehberi">
+  <div class="bagla-ic rehber-ic">
+    <h2>📲 iPhone / iPad'e kurulum</h2>
+
+    <p class="gizli uyari-satir" id="iosSafariDegilNot">⚠️ Şu an Safari'de değilsin. Bu adresi kopyala, <b>Safari</b>'de aç, rehberi orada uygula — iOS'ta kurulumun güvenilir yolu Safari'dir.</p>
+
+    <div class="uyari-kutu">
+      <p><b>Neden kurmak şart?</b> Safari, 7 gün boyunca kullanmadığın sitelerin bu cihazdaki verilerini <b>silebilir</b>. NarChat uçtan-uca şifrelidir: konuşmalarını açan anahtar <b>yalnız senin cihazında</b> durur, sunucuda yoktur. O veri silinirse konuşmalarını <b>biz — uygulamanın sahibi — dahil hiç kimse, hiçbir teknoloji geri getiremez.</b> Bu bir eksik değil, gizliliğinin ta kendisi: anahtar bizde olsaydı mesajlarını biz de okuyabilirdik.</p>
+      <p>Ana ekrana kurulan NarChat bu silmeden <b>muaftır</b>; üstelik tam ekran, gerçek uygulama gibi açılır ve bildirimler çalışır.</p>
+    </div>
+
+    <div class="uyari-kutu sira-kutu">
+      <p><b>⚠️ Sıra çok önemli: ① ÖNCE kur → ② kaydını KURULU uygulamada yap.</b><br>
+      Safari sekmesi ile ana ekrandaki kurulu uygulama <b>ayrı depolama</b> kullanır — sekmede açtığın hesap kurulu uygulamaya kendiliğinden geçmez.</p>
+    </div>
+
+    <b class="rehber-baslik">Kurulum adımları (Safari):</b>
+    <ol class="rehber-adimlar">
+      <li><span class="adim-no">1</span> Bu sayfayı <b>Safari</b>'de aç. <small>(Chrome/Firefox'taysan adresi kopyalayıp Safari'ye yapıştır.)</small></li>
+      <li><span class="adim-no">2</span> Alttaki <b>Paylaş</b> düğmesine dokun:
+        <span class="paylas-ikon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg></span>
+        <small>(kare içinden yukarı çıkan ok — ekranın en altında, ortada)</small></li>
+      <li><span class="adim-no">3</span> Açılan menüde biraz <b>aşağı kaydır</b> → <b>"Ana Ekrana Ekle"</b>ye dokun <span class="paylas-ikon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg></span></li>
+      <li><span class="adim-no">4</span> Sağ üstteki <b>"Ekle"</b>ye dokun.</li>
+      <li><span class="adim-no">5</span> Ana ekranında <b>NarChat simgesi</b> belirdi 🎉 — bundan sonra NarChat'i <b>hep bu simgeden</b> aç.</li>
+      <li><span class="adim-no">6</span> Kurulu uygulamayı aç → kaydını (<b>Yeni hesap oluştur</b>) <b>orada</b> yap.</li>
+    </ol>
+
+    <details class="rehber-detay">
+      <summary>😅 Kaydımı yanlışlıkla önce Safari'de yaptım — ne yapayım?</summary>
+      <p>Panik yok, konuşmaların kayıpsız taşınır: Safari sekmesinde girişin açıkken <b>Ayarlar → Cihazlarım → Yeni cihaz bağla</b> de; bir kod çıkar. Sonra kurulu uygulamayı aç, aynı kullanıcı adı + parolayla giriş yap — karşına çıkan <b>"Cihaz bağla"</b> ekranına o kodu gir. Bitti; artık hep kurulu uygulamayı kullan.</p>
+    </details>
+
+    <p class="ince">Bu, Apple'ın resmî "web uygulaması" kurulum yöntemidir — App Store gerekmez, ek izin istemez.</p>
+    <button id="iosRehberKapat" class="tam">Anladım</button>
+  </div>
+</div>
+
+<!-- ── MASAÜSTÜ KURULUM REHBERİ (kurulum-API'siz tarayıcılar: Safari-Mac / Firefox) ── -->
+<div class="bagla-pop gizli" id="masaRehber" role="dialog" aria-modal="true" aria-label="Bilgisayara kurulum rehberi">
+  <div class="bagla-ic rehber-ic">
+    <h2>🖥️ Bilgisayara kurulum</h2>
+    <p>Kurulunca NarChat kendi penceresinde, gerçek uygulama gibi açılır — sekme aramazsın, verilerin tarayıcı temizliğinden korunur.</p>
+    <ol class="rehber-adimlar">
+      <li><span class="adim-no">1</span> <b>Chrome / Edge:</b> bu sayfada çıkan <b>"Uygulamayı kur"</b> düğmesine ya da adres çubuğunun sağ ucundaki kur simgesine tıkla → <b>Kur</b>.</li>
+      <li><span class="adim-no">2</span> <b>Safari (Mac):</b> üst menüden <b>Dosya → Dock'a Ekle…</b> de.</li>
+      <li><span class="adim-no">3</span> <b>Firefox:</b> masaüstü kurulumunu desteklemez — Chrome ya da Edge ile açmanı öneririz.</li>
+    </ol>
+    <button id="masaRehberKapat" class="tam">Anladım</button>
+  </div>
+</div>
+
+<script type="module" src="/app.js?v=61"></script>
+<script type="module" src="/kurulum.js?v=1"></script>
 </body>
 </html>

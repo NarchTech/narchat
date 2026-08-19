@@ -22,7 +22,7 @@ async function sunucuBaslat(){
   return { proc:p };
 }
 async function uyg(p){ await p.waitForFunction(()=>{ const b=document.getElementById('kayitBtn'); return !!b && typeof b.onclick==='function'; }, null, {timeout:25000}); }
-async function kayit(ctx, u){ const p=await ctx.newPage(); await p.goto(BASE+'/'); await uyg(p); await p.fill('#gKullanici',u); await p.fill('#gParola','parola1234'); await p.click('#kayitBtn'); await p.waitForSelector('#sohbet:not(.gizli)',{timeout:20000}); return p; }
+async function kayit(ctx, u){ const p=await ctx.newPage(); await p.goto(BASE+'/'); await uyg(p); await p.fill('#gKullanici',u); await p.fill('#gParola','parola1234'); await p.click('#kayitBtn'); await p.click('#kayitOnayTamam'); await p.waitForSelector('#sohbet:not(.gizli)',{timeout:20000}); return p; }
 // tarayıcı-içinde base64→Uint8Array + DataTransfer kur + olay dispatch et (paste/drop programatik)
 const B64_TO_U8 = `(b64)=>{ const bin=atob(b64); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i); return u; }`;
 let server;

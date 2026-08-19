@@ -31,7 +31,7 @@ async function main(){
   const browser = await chromium.launch({ channel:'chrome', headless:HEADLESS });
   const ctx = await browser.newContext({ ...iPhone, colorScheme:'light' });   // light sabitle → --primary deterministik
   const A = await ctx.newPage(); await A.goto(BASE+'/'); await uyg(A);
-  await A.fill('#gKullanici','alice'); await A.fill('#gParola','parola1234'); await A.click('#kayitBtn');
+  await A.fill('#gKullanici','alice'); await A.fill('#gParola','parola1234'); await A.click('#kayitBtn'); await A.click('#kayitOnayTamam');
   await A.waitForSelector('#sohbet:not(.gizli)', {timeout:20000});
   await A.click('#altNav button[data-gor="ayarlar"]');
   await A.waitForSelector('#paletSegment', {timeout:6000});
@@ -70,7 +70,7 @@ async function main(){
   // [6] KOYU tema × palet cascade doğru: dark okyanus değeri gelir (light okyanus/nar-dark DEĞİL)
   const ctxD = await browser.newContext({ ...iPhone, colorScheme:'dark' });
   const D = await ctxD.newPage(); await D.goto(BASE+'/'); await uyg(D);
-  await D.fill('#gKullanici','aylin'); await D.fill('#gParola','parola1234'); await D.click('#kayitBtn');
+  await D.fill('#gKullanici','aylin'); await D.fill('#gParola','parola1234'); await D.click('#kayitBtn'); await D.click('#kayitOnayTamam');
   await D.waitForSelector('#sohbet:not(.gizli)', {timeout:20000});
   await D.click('#altNav button[data-gor="ayarlar"]'); await D.waitForSelector('#paletSegment', {timeout:6000});
   await D.locator('#paletSegment button[data-palet="okyanus"]').click();

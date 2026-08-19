@@ -31,7 +31,7 @@ async function kayit(ctx, kullanici){
   page.on('dialog', d=>d.accept());          // confirm() → otomatik onayla
   await page.goto(BASE+'/'); await uygulamaHazir(page);
   await page.fill('#gKullanici', kullanici); await page.fill('#gParola', PAROLA);
-  await page.click('#kayitBtn'); await page.waitForSelector('#sohbet:not(.gizli)', {timeout:20000});
+  await page.click('#kayitBtn'); await page.click('#kayitOnayTamam'); await page.waitForSelector('#sohbet:not(.gizli)', {timeout:20000});
   return page;
 }
 async function odayaGir(page){

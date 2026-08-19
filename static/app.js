@@ -11,8 +11,8 @@
 import _sodium from './vendor/libsodium-sumo.js';
 import { API_KOK } from './kok.js?v=1';
 import { dogrulayiciUret, meydanImzala, KDF_VARSAYILAN } from './auth.js?v=2';
-import { aramaInit, aramaBaslat, aramaCevapla, aramaReddet, sinyalGeldi, kapat as aramaKapat, durumu as aramaDurumu, videoMu as aramaVideoMu, arayan as aramaArayan, aktifOda as aramaAktifOda, mikrofonToggle, mikrofonKapali, hoparlorToggle, hoparlorAcikMi, kameraToggle, kameraKapaliMi, kameraCevir, yuzKameraTipi } from './arama.js?v=11';
-import { grupInit, grupBaslat, grupKatil, grupReddet, grupKapat, grupSinyalGeldi, grupDurumu, grupVideoMu, grupOdasi, grupArayan, grupYerel, grupKatilimcilar, grupMikToggle, grupMikKapali, grupKameraToggle, grupKameraKapali, grupKameraCevir, grupYuz } from './grup-arama.js?v=2';
+import { aramaInit, aramaBaslat, aramaCevapla, aramaReddet, sinyalGeldi, kapat as aramaKapat, durumu as aramaDurumu, videoMu as aramaVideoMu, arayan as aramaArayan, aktifOda as aramaAktifOda, mikrofonToggle, mikrofonKapali, hoparlorToggle, hoparlorAcikMi, kameraToggle, kameraKapaliMi, kameraCevir, yuzKameraTipi } from './arama.js?v=12';
+import { grupInit, grupBaslat, grupKatil, grupReddet, grupKapat, grupSinyalGeldi, grupDurumu, grupVideoMu, grupOdasi, grupArayan, grupYerel, grupKatilimcilar, grupMikToggle, grupMikKapali, grupKameraToggle, grupKameraKapali, grupKameraCevir, grupYuz } from './grup-arama.js?v=3';
 await _sodium.ready;
 const S = _sodium;
 const B64 = S.base64_variants.ORIGINAL;
@@ -2911,7 +2911,16 @@ function emojiAcKapat(){
 
 // ════════ olaylar ════════
 $('girisBtn').onclick=()=>girisYap(false);
-$('kayitBtn').onclick=()=>girisYap(true);
+// Kayıt onayı: sıfır-bilgi sistemin geri-dönüşsüz kuralları (parola kurtarılamaz, anahtar yalnız
+// cihazda) hesap AÇILMADAN kabul ettirilir — yanlış cihazda / yanlış beklentiyle kayıt kazalarını önler.
+function kayitOnayIste(){
+  const k = $('gKullanici').value.trim(), p = $('gParola').value;
+  if (!k || p.length < 4) return girisYap(true);   // eksik alan → girisYap kendi hata mesajını göstersin
+  $('kayitOnay').classList.remove('gizli');
+}
+$('kayitBtn').onclick=kayitOnayIste;
+$('kayitOnayTamam').onclick=()=>{ $('kayitOnay').classList.add('gizli'); girisYap(true); };
+$('kayitOnayVazgec').onclick=()=>$('kayitOnay').classList.add('gizli');
 $('cikisBtn').onclick=async()=>{ await api('/api/cikis',{method:'POST'}); location.reload(); };
 $('grupBtn').onclick=grupKur;
 $('grupIptal').onclick=()=>$('grupPanel').classList.add('gizli');
@@ -3047,7 +3056,7 @@ $('mesajIn').addEventListener('input', taslakKaydet);   // N7: yarım kalan yaz�
 $('mesajIn').addEventListener('input', yaziyorBildir);
 $('mesajIn').addEventListener('keydown',e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); gonder(); } });
 $('gParola').addEventListener('keydown',e=>{ if(e.key==='Enter') girisYap(false); });
-$('gDavet').addEventListener('keydown',e=>{ if(e.key==='Enter') girisYap(true); });
+$('gDavet').addEventListener('keydown',e=>{ if(e.key==='Enter') kayitOnayIste(); });
 $('aramaIn').addEventListener('input', e=>{ odaListesiCiz(e.target.value); globalAraTetikle(e.target.value); });
 // alt-nav
 document.querySelectorAll('#altNav button').forEach(b=> b.onclick=()=>gorunumGec(b.dataset.gor));

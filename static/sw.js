@@ -1,7 +1,7 @@
 // NarChat Service Worker (Faz-1 iskelet) — kabuk önbelleği (offline aç).
 // NOT: API/mesaj istekleri ASLA önbelleğe alınmaz (gerçek-zaman + gizlilik).
-const CACHE = 'narchat-kabuk-v60';
-const KABUK = ['/', '/index.html', '/app.js?v=59', '/auth.js?v=2', '/kok.js?v=1', '/vendor/libsodium-sumo.js', '/arama.js?v=11', '/grup-arama.js?v=2', '/tokens.css?v=43', '/manifest.webmanifest',
+const CACHE = 'narchat-kabuk-v61';
+const KABUK = ['/', '/index.html', '/app.js?v=61', '/auth.js?v=2', '/kok.js?v=1', '/kurulum.js?v=1', '/vendor/libsodium-sumo.js', '/arama.js?v=12', '/grup-arama.js?v=3', '/tokens.css?v=44', '/manifest.webmanifest',
                '/logo.svg', '/favicon.svg', '/bos-durum.svg'];
 
 self.addEventListener('install', (e) => {

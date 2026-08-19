@@ -64,7 +64,7 @@ async function main(){
   await p2.fill('#gKullanici', 'yenikullanici');
   await p2.fill('#gParola', 'parola1234');
   await p2.fill('#gDavet', kod);
-  await p2.click('#kayitBtn');
+  await p2.click('#kayitBtn'); await p2.click('#kayitOnayTamam');
   await p2.waitForSelector('#sohbet:not(.gizli)', { timeout: 20000 });
   log('  ✅ üretilen kodla ana uygulamada kayıt başarılı (sohbet ekranına girdi)');
 
@@ -75,7 +75,7 @@ async function main(){
   await p2.fill('#gKullanici', 'ikincikullanici');
   await p2.fill('#gParola', 'parola1234');
   await p2.fill('#gDavet', kod);
-  await p2.click('#kayitBtn');
+  await p2.click('#kayitBtn'); await p2.click('#kayitOnayTamam');
   await p2.waitForFunction(()=>document.getElementById('gHata')?.textContent?.length>0, null, {timeout:8000});
   const hata = await p2.textContent('#gHata');
   if (!hata) carp('kullanılmış kodla tekrar kayıt reddedilmedi');

@@ -52,7 +52,7 @@ async function main(){
   log('1) UI\'dan yeni hesap oluştur (v2 kayıt):');
   await page.fill('#gKullanici', KULLANICI);
   await page.fill('#gParola', PAROLA);
-  await page.click('#kayitBtn');
+  await page.click('#kayitBtn'); await page.click('#kayitOnayTamam');
   await page.waitForSelector('#sohbet:not(.gizli)', { timeout: 20000 });
   log('  ✅ kayıt oldu, sohbet ekranına girdi');
 

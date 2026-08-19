@@ -218,21 +218,40 @@ export function grupKameraToggle() {
 }
 export function grupKameraKapali() { return kameraKapali; }
 export function grupYuz() { return yuzKamera; }
+// ⚠ Android WebView facingMode tuzağı — tam açıklama arama.js/kameraTrackAl'de (24-Tem native APK bug'ı).
+// { ideal } zayıf kısıt → Android sessizce ön kamerada kalır. 4-katman: exact → (kamerayı bırak+exact) → ideal → geri-yükle.
+async function _grupKameraTrackAl(hedefYuz, eskiYuz, kapali, medya) {
+  const dene = (yuz, kesin) => navigator.mediaDevices.getUserMedia(
+    { video: { facingMode: kesin ? { exact: yuz } : { ideal: yuz } }, audio: false });
+  let akis = null, sonucYuz = hedefYuz;
+  try { akis = await dene(hedefYuz, true); }                                 // 1) exact, kamera açıkken (iOS: kesintisiz)
+  catch {
+    try { medya && medya.getVideoTracks().forEach(t => t.stop()); } catch {} // eski kamerayı bırak (Android eşzamanlı açamaz)
+    try { akis = await dene(hedefYuz, true); }                               // 2) exact, kamera serbest
+    catch {
+      try { akis = await dene(hedefYuz, false); }                           // 3) ideal (exact desteklenmiyorsa)
+      catch {
+        try { akis = await dene(eskiYuz, false); sonucYuz = eskiYuz; }      // 4) geri-yükle: eski kamera, yüz değişmez
+        catch { return null; }
+      }
+    }
+  }
+  const t = akis.getVideoTracks()[0];
+  if (!t) { try { akis.getTracks().forEach(x => x.stop()); } catch {} return null; }
+  t.enabled = !kapali;
+  return { track: t, yuz: sonucYuz };
+}
 export async function grupKameraCevir() {
   if (!video || !yerelMedya) return yuzKamera;
-  const yeniYuz = yuzKamera === 'user' ? 'environment' : 'user';
-  let yeniAkis;
-  try { yeniAkis = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: yeniYuz } }, audio: false }); }
-  catch { return yuzKamera; }
-  const yeniTrack = yeniAkis.getVideoTracks()[0];
-  if (!yeniTrack) { try { yeniAkis.getTracks().forEach(t => t.stop()); } catch {} return yuzKamera; }
-  yeniTrack.enabled = !kameraKapali;
+  const hedefYuz = yuzKamera === 'user' ? 'environment' : 'user';
+  const r = await _grupKameraTrackAl(hedefYuz, yuzKamera, kameraKapali, yerelMedya);
+  if (!r) return yuzKamera;
   for (const es of esler.values()) {                 // her eşin video sender'ını değiştir (akış kesilmez)
-    try { const s = es.pc.getSenders().find(x => x.track && x.track.kind === 'video'); if (s) await s.replaceTrack(yeniTrack); } catch {}
+    try { const s = es.pc.getSenders().find(x => x.track && x.track.kind === 'video'); if (s) await s.replaceTrack(r.track); } catch {}
   }
   try { yerelMedya.getVideoTracks().forEach(t => { yerelMedya.removeTrack(t); t.stop(); }); } catch {}
-  try { yerelMedya.addTrack(yeniTrack); } catch {}
-  yuzKamera = yeniYuz;
+  try { yerelMedya.addTrack(r.track); } catch {}
+  yuzKamera = r.yuz;
   try { window.__GRUP_YUZ = yuzKamera; } catch {}
   try { uiCb(); } catch {}
   return yuzKamera;

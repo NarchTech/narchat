@@ -28,7 +28,7 @@ const API_PORT = 8145;         // "gerçek sunucu" (izole)
 const APP_PORT = 8146;         // "bundled app origin" (statik dosyalar farklı port'tan)
 const API_BASE = `http://127.0.0.1:${API_PORT}`;
 const APP_BASE = `http://127.0.0.1:${APP_PORT}`;
-const PROD_URL = 'https://narchat.narchviz.com';   // app.js/kok.js'teki HARDCODED native API_KOK
+const PROD_URL = 'https://chat.narchtech.com';   // kok.js'teki HARDCODED native API_KOK (24 Tem domain göçü)
 const HEADLESS = process.env.HEADLESS === '1';
 const PAROLA = 'parola1234';
 
@@ -99,12 +99,12 @@ async function main(){
 
   log('1) alice + bob, APP origin\'inden (' + APP_BASE + ') açıp API\'ye (' + PROD_URL + '→yerel) cross-origin kayıt olur:');
   await alice.goto(APP_BASE + '/'); await uygulamaHazir(alice);
-  await alice.fill('#gKullanici', 'alice'); await alice.fill('#gParola', PAROLA); await alice.click('#kayitBtn');
+  await alice.fill('#gKullanici', 'alice'); await alice.fill('#gParola', PAROLA); await alice.click('#kayitBtn'); await alice.click('#kayitOnayTamam');
   await alice.waitForSelector('#sohbet:not(.gizli)', { timeout: 20000 });
   log('  ✅ alice cross-origin kayıt oldu (sohbet ekranına girdi)');
 
   await bob.goto(APP_BASE + '/'); await uygulamaHazir(bob);
-  await bob.fill('#gKullanici', 'bob'); await bob.fill('#gParola', PAROLA); await bob.click('#kayitBtn');
+  await bob.fill('#gKullanici', 'bob'); await bob.fill('#gParola', PAROLA); await bob.click('#kayitBtn'); await bob.click('#kayitOnayTamam');
   await bob.waitForSelector('#sohbet:not(.gizli)', { timeout: 20000 });
   log('  ✅ bob cross-origin kayıt oldu');
 

@@ -11,7 +11,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const KOK = dirname(dirname(fileURLToPath(import.meta.url)));
-const PORT = 8110, BASE = `http://127.0.0.1:${PORT}`;
+const PORT = 8151, BASE = `http://127.0.0.1:${PORT}`;   // 8110 artık canlı landing-sunucusunun (24 Tem) — çakışmasın
 const HEADLESS = process.env.HEADLESS === '1';
 const PAROLA = 'parola1234';
 const iPhone = devices['iPhone 13'];
@@ -31,7 +31,7 @@ async function kayit(ctx, kullanici){
   const page = await ctx.newPage();
   await page.goto(BASE+'/'); await uygulamaHazir(page);
   await page.fill('#gKullanici', kullanici); await page.fill('#gParola', PAROLA);
-  await page.click('#kayitBtn'); await page.waitForSelector('#sohbet:not(.gizli)', {timeout:20000});
+  await page.click('#kayitBtn'); await page.click('#kayitOnayTamam'); await page.waitForSelector('#sohbet:not(.gizli)', {timeout:20000});
   return page;
 }
 async function odayaGir(page){

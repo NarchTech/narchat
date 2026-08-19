@@ -59,7 +59,7 @@ async function main() {
   await a.goto(BASE + '/'); await uygulamaHazir(a);
 
   log('1) alice kayıt → kişisel SSE bağlanır → banner gizli (bağlı):');
-  await a.fill('#gKullanici', 'alice'); await a.fill('#gParola', PAROLA); await a.click('#kayitBtn');
+  await a.fill('#gKullanici', 'alice'); await a.fill('#gParola', PAROLA); await a.click('#kayitBtn'); await a.click('#kayitOnayTamam');
   await a.waitForSelector('#sohbet:not(.gizli)', { timeout: 20000 });
   await a.waitForFunction(bannerGizli, null, { timeout: 12000 });
   log('  ✅ bağlı: banner gizli');

@@ -53,7 +53,7 @@ async function yeniSayfa(ctx, ad) {
 }
 async function kayitOl(page, kullanici) {
   await page.fill('#gKullanici', kullanici); await page.fill('#gParola', PAROLA);
-  await page.click('#kayitBtn'); await page.waitForSelector('#sohbet:not(.gizli)', { timeout: 20000 });
+  await page.click('#kayitBtn'); await page.click('#kayitOnayTamam'); await page.waitForSelector('#sohbet:not(.gizli)', { timeout: 20000 });
 }
 const baloncuk = (page, metin) => page.locator('#akis .msg', { hasText: metin }).first();
 async function menuAc(page, metin) {

@@ -70,7 +70,7 @@ async function kayitOl(ctx, kullanici) {
   await uygulamaHazir(page);
   await page.fill('#gKullanici', kullanici);
   await page.fill('#gParola', PAROLA);
-  await page.click('#kayitBtn');
+  await page.click('#kayitBtn'); await page.click('#kayitOnayTamam');
   await page.waitForSelector('#sohbet:not(.gizli)', { timeout: 20000 });  // sohbet ekranı = keypair üretildi (Argon2id sarmalı) + pubkey yüklendi
   log(`  ✓ @${kullanici} kayıt oldu + cihaz anahtarı üretti (pubkey sunucuya yüklendi)`);
   return page;

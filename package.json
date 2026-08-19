@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:www": "rm -rf www && cp -R static www"
+    "build:www": "rm -rf www && cp -R static www && rm -rf www/apk"
   },
   "keywords": [],
   "author": "",

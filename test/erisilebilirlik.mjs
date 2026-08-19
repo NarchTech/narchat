@@ -37,7 +37,7 @@ async function main(){
   const page = await ctx.newPage();
   await page.goto(BASE+'/'); await uygulamaHazir(page);
   await page.fill('#gKullanici', 'alice'); await page.fill('#gParola', PAROLA);
-  await page.click('#kayitBtn'); await page.waitForSelector('#sohbet:not(.gizli)', {timeout:20000});
+  await page.click('#kayitBtn'); await page.click('#kayitOnayTamam'); await page.waitForSelector('#sohbet:not(.gizli)', {timeout:20000});
   log('  ✓ alice giriş yaptı');
 
   await page.click('#altNav button[data-gor="ayarlar"]');

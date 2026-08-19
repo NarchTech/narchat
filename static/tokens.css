@@ -864,3 +864,38 @@ mark.ara-im { background: var(--gold); color: #2e171c; border-radius: 3px; paddi
   padding: 2px 4px; border-radius: var(--r-1); transition: transform var(--mo-fast) var(--ease); }
 .tepki-sec-pop button:hover { background: var(--surface-3); transform: scale(1.15); }
 .tepki-sec-arti { font-size: 15px !important; opacity: .6; }
+
+/* ── PWA kurulum yardımcısı (kurulum.js) — banner + rehber overlay'leri + kayıt onayı ── */
+.kurulum-banner { width: 100%; display: flex; flex-direction: column; gap: var(--s-2); margin-top: var(--s-2); }
+.kurulum-banner.gizli { display: none; }
+.kurulum-btn { font-weight: var(--w-bold); }
+a.kurulum-btn { display: block; text-align: center; text-decoration: none; background: var(--primary);
+  color: var(--on-primary, #fff); border-radius: var(--r-3); padding: 12px; }
+.kurulum-uyari-satir, .uyari-satir { color: var(--danger) !important; }
+.hesap-detay { width: 100%; margin-top: var(--s-2); font-size: var(--f-2); color: var(--text-2);
+  background: var(--surface-2); border-radius: var(--r-3); padding: var(--s-2) var(--s-3); text-align: left; }
+.hesap-detay summary { cursor: pointer; font-weight: var(--w-bold); color: var(--text); font-size: var(--f-3); }
+.hesap-detay ul { margin: var(--s-2) 0 var(--s-1); padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.hesap-detay li { line-height: 1.45; }
+
+/* rehber içeriği: bagla-pop iskeleti + sola yaslı, kaydırılabilir uzun içerik */
+.rehber-ic { max-width: 460px; text-align: left; max-height: min(86vh, 720px); overflow-y: auto; }
+.rehber-ic h2 { text-align: center; }
+.uyari-kutu { border: 1.5px solid var(--danger); border-radius: var(--r-3); padding: var(--s-3);
+  display: flex; flex-direction: column; gap: var(--s-2); background: var(--surface-2);
+  background: color-mix(in srgb, var(--danger) 7%, var(--surface)); }   /* color-mix yoksa surface-2'ye düşer */
+.uyari-kutu p { color: var(--text); }
+.sira-kutu { border-style: dashed; }
+.rehber-baslik { font-size: var(--f-3); }
+.rehber-adimlar { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s-2); }
+.rehber-adimlar li { display: block; font-size: var(--f-3); color: var(--text); line-height: 1.5;
+  background: var(--surface-2); border-radius: var(--r-2); padding: var(--s-2) var(--s-3); }
+.rehber-adimlar small { color: var(--text-2); }
+.adim-no { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px;
+  border-radius: var(--r-full); background: var(--primary); color: #fff; font-size: var(--f-2);
+  font-weight: var(--w-bold); margin-right: 6px; vertical-align: -4px; }
+.paylas-ikon { display: inline-flex; width: 20px; height: 20px; vertical-align: -4px; color: var(--primary); }
+.paylas-ikon svg { width: 100%; height: 100%; }
+.rehber-detay { background: var(--surface-2); border-radius: var(--r-2); padding: var(--s-2) var(--s-3); font-size: var(--f-3); }
+.rehber-detay summary { cursor: pointer; font-weight: var(--w-bold); }
+.rehber-detay p { margin-top: var(--s-2); }
